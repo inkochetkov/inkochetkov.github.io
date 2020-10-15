@@ -93,12 +93,12 @@ body, html {
  padding: 0;
  margin: 10px;
  box-shadow:0 0 10px rgba(0,0,0,0.5);
-} 
+}
 .col-sm img{
  margin-top:20px;
  width:300px;
  height:500px;
- 
+
 }
 .portfolio{
 background-color:gray;
@@ -107,18 +107,18 @@ text-align:center;
 color: white;
 }
 @media screen and (min-device-width: 1280px) {
-  .portfolio{height:2500px;}
+  .portfolio{height:3000px;}
  }
 @media screen and (device-width: 768px) {
   .portfolio{height:3500px;}
  }
 @media screen and (device-width: 480px) {
   .portfolio{height:4500px;}
-  .col-sm img{width:280px;} 
+  .col-sm img{width:280px;}
 }
 @media screen and (device-width: 320px) {
   .portfolio{height:5500px;}
-  .col-sm img{width:280px;} 
+  .col-sm img{width:280px;}
 }
 
 
