@@ -1,1 +1,0 @@
-# inkochetkov.github.io
