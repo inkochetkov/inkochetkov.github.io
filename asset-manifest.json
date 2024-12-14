@@ -1,12 +1,13 @@
 {
   "files": {
     "main.css": "/static/css/main.3b11f503.css",
-    "main.js": "/static/js/main.7582110f.js",
+    "main.js": "/static/js/main.fada6934.js",
     "static/media/agch.png": "/static/media/agch.b417c634d37b9e2292b2.png",
     "static/media/fond.png": "/static/media/fond.5980e799094ac3c001c3.png",
     "static/media/uk.png": "/static/media/uk.c9de8fc31dfc8fed8d09.png",
     "static/media/bg.png": "/static/media/bg.dbb608ab3c4dd6f00a55.png",
     "static/media/go.png": "/static/media/go.4a1071d0e6cd965df506.png",
+    "static/media/rn.png": "/static/media/rn.7c09ab52d9a3eb627206.png",
     "static/media/media.png": "/static/media/media.23346eade3d2306fa503.png",
     "static/media/map.png": "/static/media/map.964f8caa487f55083b90.png",
     "static/media/wc.png": "/static/media/wc.648701f080fadb71a337.png",
@@ -14,10 +15,10 @@
     "static/media/pub.png": "/static/media/pub.0851dc3cf3aa8242c95f.png",
     "index.html": "/index.html",
     "main.3b11f503.css.map": "/static/css/main.3b11f503.css.map",
-    "main.7582110f.js.map": "/static/js/main.7582110f.js.map"
+    "main.fada6934.js.map": "/static/js/main.fada6934.js.map"
   },
   "entrypoints": [
     "static/css/main.3b11f503.css",
-    "static/js/main.7582110f.js"
+    "static/js/main.fada6934.js"
   ]
 }
