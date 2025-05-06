@@ -1,5 +1,16 @@
 [
     {   
+        "name": "ikochetkov.ru",
+        "type": "Site",
+        "title": "Business card website",
+        "stack": "React",
+        "description": "Website for the implementation of digital orders",
+        "link": "https://ikochetkov.ru/",
+        "img": "/image/ikochetkov.png",
+        "year": "2025",
+        "images": []
+    },
+    {   
         "name": "landw.ru",
         "type": "Landing",
         "title": "Landing page",
@@ -91,7 +102,7 @@
         "name": "public.gallery-chizhov.ru",
         "type": "Site",
         "title": "Site company",
-        "stack": "PHP, MySQL, YII2",
+        "stack": "PHP, MySQL, YII2, Go",
         "description": "Info site company",
         "link": "https://public.gallery-chizhov.ru/",
         "img": "/image/public.png",
