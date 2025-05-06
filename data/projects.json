@@ -1,0 +1,178 @@
+[
+    {   
+        "name": "landw.ru",
+        "type": "Landing",
+        "title": "Landing page",
+        "stack": "React",
+        "description": "А site that encourages people to buy products",
+        "link": "https://landw.ru",
+        "img": "/image/landw.png",
+        "year": "2025",
+        "images": []
+    },
+    {   
+        "name": "another-flight",
+        "type": "Mobile app",
+        "title": "Mobile and cross-platform application - IOS, Android",
+        "stack": "React Native, React, Expo",
+        "description": "3D arcade game, space shuttle flight simulator",
+        "link": "https://app.ikochetkov.ru/another-flight",
+        "img": "/image/another-flight.png",
+        "year": "2024",
+        "images": []
+    },
+    {   
+        "name": "gravitation-cube",
+        "type": "Mobile app",
+        "title": "Mobile and cross-platform application - IOS, Android",
+        "stack": "React Native, React, Expo",
+        "description": "3D arcade game, arena fighting simulator with survival elements",
+        "link": "https://app.ikochetkov.ru/gravitation-cube",
+        "img": "/image/cube.png",
+        "year": "2024",
+        "images": []
+    },
+    {   
+        "name": "bubble-tap",
+        "type": "Mobile app",
+        "title":"Mobile and cross-platform application - IOS, Android",
+        "stack": "React Native, React, Expo",
+        "description":"2D Casual Game",
+        "link": "https://app.ikochetkov.ru/bubble-tap",
+        "img": "/image/bubble-tap.png",
+        "year": "2024",
+        "images": []
+    },
+    {   
+        "name": "psyhology",
+        "type": "Mobile app",
+        "title": "Mobile and cross-platform application - IOS, Android",
+        "stack": "React Native, React, Expo",
+        "description": "Application with psychological tests",
+        "link": "https://app.ikochetkov.ru/psyhology",
+        "img": "/image/psyhology.png",
+        "year": "2024",
+        "images": []
+    },
+    {   
+        "name": "app.ikochetkov.ru",
+        "type": "Site",
+        "title":"Application catalog site",
+        "stack": "React",
+        "description": "Catalog of mobile and cross-platform applications- IOS, Android",
+        "link": "https://app.ikochetkov.ru/",
+        "img": "/image/portfolio.png",
+        "year": "2024",
+        "images": []
+    },
+    {   
+        "name": "inkochetkov.github.io",
+        "type": "Site",
+        "title": "Portfolio site",
+        "stack": "React",
+        "description": "Indication of skills, completed projects, contact",
+        "link": "https://inkochetkov.github.io/",
+        "img": "/image/.png",
+        "year": "2024",
+        "images": []
+    },
+    {
+        "name": "glch_info_bot",
+        "type": "Chat bot telegramm",
+        "title": "bot",
+        "stack": "PHP, MySQL, YII2",
+        "description": "Chat bot telegram company",
+        "link": "@glch_info_bot",
+        "img": "/image/glch_info_bot.png",
+        "year": "2020",
+        "images": []
+    },
+    {
+        "name": "public.gallery-chizhov.ru",
+        "type": "Site",
+        "title": "Site company",
+        "stack": "PHP, MySQL, YII2",
+        "description": "Info site company",
+        "link": "https://public.gallery-chizhov.ru/",
+        "img": "/image/public.png",
+        "year": "2020",
+        "images": []
+    },
+    {
+        "name":"media.gallery-chizhov.ru",
+        "type": "Site",
+        "title": "Site company",
+        "stack": "PHP, MySQL, YII2",
+        "description": "Media site company",
+        "link": "https://media.gallery-chizhov.ru/",
+        "img": "/image/media.png",
+        "year": "2020",
+        "images": []
+    },
+    {
+        "name":"fondchizhova.ru",
+        "type": "Site",
+        "title": "Site company",
+        "stack": "PHP, MySQL, YII2, REACT",
+        "description": "Charity fund",
+        "link": "https://fondchizhova.ru/",
+        "img": "/image/fond.png",
+        "year": "2020",
+        "images": []
+    },
+    {
+        "name": "map.gallery-chizhov.ru",
+        "type": "Site",
+        "title": "Interactive map",
+        "stack": "PHP, MySQL, YII2, REACT",
+        "description": "Interactive map of the building with a list of stores",
+        "link": "https://map.gallery-chizhov.ru/",
+        "img": "/image/map.png",
+        "year": "2020",
+        "images": []
+    },
+    {
+        "name":"gallery-chizhov.ru",
+        "type": "Site",
+        "title": "Site company",
+        "stack": "PHP, MySQL, YII2, REACT",
+        "description": "Official website of the company",
+        "link": "https://gallery-chizhov.ru/",
+        "img": "/image/gallery.png",
+        "year": "2019",
+        "images": []
+    },
+    {
+        "name":"balagan-city.ru",
+        "type": "Site",
+        "title": "Site company",
+        "stack": "PHP, MySQL, YII2",
+        "description": "Restaurant website with menu and event listing",
+        "link": "https://balagan-city.ru",
+        "img": "/image/balagan.png",
+        "year": "2019",
+        "images": []
+    },
+    {
+        "name":"worldclass-vrn.ru",
+        "type": "Site",
+        "title": "Site company",
+        "stack": "PHP, MySQL, YII2",
+        "description": "Fitness club website",
+        "link":" https://worldclass-vrn.ru/",
+        "img":"/image/worldclass.png",
+        "year": "2019",
+        "images": []
+    },
+    {
+        "name": "residence.gallery-chizhov.ru",
+        "type": "Site",
+        "title": "Site company",
+        "stack": "PHP, MySQL, Bitrix",
+        "description": "Residences website",
+        "link": "https://residence.gallery-chizhov.ru/",
+        "img": "/image/residence.png",
+        "year": "2018",
+        "images": []
+    }
+]
