@@ -112,20 +112,20 @@
         }
     },
     {   
-        "name": "psyhology",
+        "name": "psychology",
         "type": "Mobile app",
         "title": "Mobile and cross-platform application - IOS, Android",
         "title_ru":"Мобильное и кроссплатформенное приложение - iOS, Android",
         "stack": "React Native, React, Expo",
         "description": "Mobile application on the topic of psychological tests",
         "description_ru":"Мобильное приложение на тему психологических тестов",
-        "link": "https://app.ikochetkov.ru/psyhology",
-        "img": "/image/psyhology/300_500.png",
+        "link": "https://app.ikochetkov.ru/psychology",
+        "img": "/image/psychology/300_500.png",
         "year": "2024",
         "images": [
-            "/image/psyhology/1320x2868-1.png",
-            "/image/psyhology/1320x2868-2.png",
-            "/image/psyhology/1320x2868-3.png"
+            "/image/psychology/1320x2868-1.png",
+            "/image/psychology/1320x2868-2.png",
+            "/image/psychology/1320x2868-3.png"
         ],
         "app":{
             "category": "Lifestyle",
