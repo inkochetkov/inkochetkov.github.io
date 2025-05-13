@@ -47,7 +47,17 @@
         "link": "https://app.ikochetkov.ru/another-flight",
         "img": "/image/another-flight/300_500.png",
         "year": "2024",
-        "images": []
+        "images": [],
+        "app":{
+            "category": "Game",
+            "linkAppStore": "",
+            "linkRuStore":"https://www.rustore.ru/catalog/app/com.mut.e.flight.another",
+            "linkGallery":"",
+            "linkNashStore":"",
+            "linkGooglePlay":"",
+            "img": "/image/another-flight/512x512.png",
+            "linkPrivacyPolicy": "/privacy_policy/another-flight.pdf"    
+        }
     },
     {   
         "name": "gravitation-cube",
@@ -55,15 +65,25 @@
         "title": "Mobile and cross-platform application - IOS, Android",
         "title_ru":"Мобильное и кроссплатформенное приложение - iOS, Android",
         "stack": "React Native, React, Expo",
-        "description": "3D arcade game, arena fighting simulator with survival elements",
-        "description_ru":"3D аркадная игра, симулятор боев на арене с элементами выживания",
+        "description": "A thrilling 3D arcade game with minimalist design and dynamic gameplay!",
+        "description_ru":"Захватывающая 3D-аркадная игра с минималистичным дизайном и динамичным игровым процессом!",
         "link": "https://app.ikochetkov.ru/gravitation-cube",
         "img": "/image/gravitation-cube/300_500.png",
         "year": "2024",
         "images": [
             "/image/gravitation-cube/1320x2868-1.png",
             "/image/gravitation-cube/1320x2868-2.png"
-        ]
+        ],
+        "app":{
+            "category": "Game",
+            "linkAppStore": "https://apps.apple.com/ru/app/gravitation-cube/id6740345780",
+            "linkRuStore":"https://www.rustore.ru/catalog/app/com.mut.e.cube.gravitation",
+            "linkGallery":"https://appgallery.huawei.com/#/app/C114139309",
+            "linkNashStore":"",
+            "linkGooglePlay":"",
+            "img": "/image/gravitation-cube/512x512.png",
+            "linkPrivacyPolicy": "/privacy_policy/gravitation-cube.pdf"    
+        }
     },
     {   
         "name": "bubble-tap",
@@ -79,7 +99,17 @@
         "images": [
             "/image/bubble-tap/1320x2868-1.png",
             "/image/bubble-tap/1320x2868-2.png"
-        ]
+        ],
+        "app":{
+            "category": "Casual game",
+            "linkAppStore": "https://apps.apple.com/ru/app/bubble-tap/id6739352305",
+            "linkRuStore":"https://www.rustore.ru/catalog/app/com.mut.e.bubble_tap",
+            "linkGallery":"",
+            "linkNashStore":"",
+            "linkGooglePlay":"",
+            "img": "/image/bubble-tap/512x512.png",
+            "linkPrivacyPolicy": "/privacy_policy/bubble-tap.pdf"    
+        }
     },
     {   
         "name": "psyhology",
@@ -96,7 +126,17 @@
             "/image/psyhology/1320x2868-1.png",
             "/image/psyhology/1320x2868-2.png",
             "/image/psyhology/1320x2868-3.png"
-        ]
+        ],
+        "app":{
+            "category": "Lifestyle",
+            "linkAppStore": "https://apps.apple.com/ru/app/psychological-tests/id6736991964",
+            "linkRuStore":"https://www.rustore.ru/catalog/app/com.mut.e.psychology",
+            "linkGallery":"",
+            "linkNashStore":"",
+            "linkGooglePlay":"",
+            "img": "/image/psychology/512x512.png",
+            "linkPrivacyPolicy": "/privacy_policy/psychology.pdf"    
+        }
     },
     {   
         "name": "app.ikochetkov.ru",
