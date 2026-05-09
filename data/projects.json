@@ -37,7 +37,7 @@
         ]
     },
     {   
-        "name": "another-flight",
+        "name": "Another Flight",
         "type": "Mobile app",
         "title": "Mobile and cross-platform application - IOS, Android",
         "title_ru":"Мобильное и кроссплатформенное приложение - iOS, Android",
@@ -49,8 +49,8 @@
         "year": "2024",
         "images": [],
         "app":{
-            "category": "Game",
-            "linkAppStore": "",
+            "category": "3D arcade game",
+            "linkAppStore": "https://apps.apple.com/us/app/another-flight/id6742047432",
             "linkRuStore":"https://www.rustore.ru/catalog/app/com.mut.e.flight.another",
             "linkGallery":"https://appgallery.huawei.com/#/app/C114571759",
             "linkNashStore":"",
@@ -60,7 +60,7 @@
         }
     },
     {   
-        "name": "gravitation-cube",
+        "name": "Gravitation Cube",
         "type": "Mobile app",
         "title": "Mobile and cross-platform application - IOS, Android",
         "title_ru":"Мобильное и кроссплатформенное приложение - iOS, Android",
@@ -75,7 +75,7 @@
             "/image/gravitation-cube/1320x2868-2.png"
         ],
         "app":{
-            "category": "Game",
+            "category": "3D arcade game",
             "linkAppStore": "https://apps.apple.com/ru/app/gravitation-cube/id6740345780",
             "linkRuStore":"https://www.rustore.ru/catalog/app/com.mut.e.cube.gravitation",
             "linkGallery":"https://appgallery.huawei.com/#/app/C114139309",
@@ -86,13 +86,13 @@
         }
     },
     {   
-        "name": "bubble-tap",
+        "name": "BubbleTap",
         "type": "Mobile app",
         "title":"Mobile and cross-platform application - IOS, Android",
         "title_ru":"Мобильное и кроссплатформенное приложение - iOS, Android",
         "stack": "React Native, React, Expo",
-        "description":"2D Casual Game",
-        "description_ru":"2D казуальная игра",
+        "description":"3D Arcade game",
+        "description_ru":"3D аркадная игра",
         "link": "https://app.ikochetkov.ru/bubble-tap",
         "img": "/image/bubble-tap/300_500.png",
         "year": "2024",
@@ -101,10 +101,10 @@
             "/image/bubble-tap/1320x2868-2.png"
         ],
         "app":{
-            "category": "Casual game",
+            "category": "3D arcade game",
             "linkAppStore": "https://apps.apple.com/ru/app/bubble-tap/id6739352305",
             "linkRuStore":"https://www.rustore.ru/catalog/app/com.mut.e.bubble_tap",
-            "linkGallery":"",
+            "linkGallery":"https://appgallery.huawei.com/#/app/C113117975",
             "linkNashStore":"",
             "linkGooglePlay":"",
             "img": "/image/bubble-tap/512x512.png",
@@ -112,7 +112,7 @@
         }
     },
     {   
-        "name": "psychology",
+        "name": "Psychology",
         "type": "Mobile app",
         "title": "Mobile and cross-platform application - IOS, Android",
         "title_ru":"Мобильное и кроссплатформенное приложение - iOS, Android",
