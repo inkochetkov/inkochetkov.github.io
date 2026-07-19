@@ -1,13 +1,13 @@
 [
     {   
-        "name": "ikochetkov.ru",
+        "name": "portfolio",
         "type": "Site",
         "title": "Business card website",
         "title_ru": "Сайт визитка",
         "stack": "React",
         "description": "Website for the implementation of digital orders",
         "description_ru":"Сайт для реализации цифровых заказов",
-        "link": "https://ikochetkov.ru/",
+        "link": "https://inkochetkov.github.io/portfolio",
         "img": "/image/ikochetkov/300_500.png",
         "year": "2025",
         "images": [
@@ -27,7 +27,6 @@
         "stack": "React",
         "description": "Landing site for products",
         "description_ru":"Сайт лендинг для продукции",
-        "link": "https://landw.ru",
         "img": "/image/landw/300_500.png",
         "year": "2025",
         "images": [
@@ -37,20 +36,20 @@
         ]
     },
     {   
-        "name": "Another Flight",
+        "name": "another-flight",
         "type": "Mobile app",
         "title": "Mobile and cross-platform application - IOS, Android",
         "title_ru":"Мобильное и кроссплатформенное приложение - iOS, Android",
         "stack": "React Native, React, Expo",
         "description": "3D arcade game, space shuttle flight simulator",
         "description_ru":"3D аркадная игра, симулятор полета космического челнока",
-        "link": "https://app.ikochetkov.ru/another-flight",
+        "link": "https://inkochetkov.github.io/app/#/Another%20Flight",
         "img": "/image/another-flight/300_500.png",
         "year": "2024",
         "images": [],
         "app":{
-            "category": "3D arcade game",
-            "linkAppStore": "https://apps.apple.com/us/app/another-flight/id6742047432",
+            "category": "Game",
+            "linkAppStore": "",
             "linkRuStore":"https://www.rustore.ru/catalog/app/com.mut.e.flight.another",
             "linkGallery":"https://appgallery.huawei.com/#/app/C114571759",
             "linkNashStore":"",
@@ -60,14 +59,14 @@
         }
     },
     {   
-        "name": "Gravitation Cube",
+        "name": "gravitation-cube",
         "type": "Mobile app",
         "title": "Mobile and cross-platform application - IOS, Android",
         "title_ru":"Мобильное и кроссплатформенное приложение - iOS, Android",
         "stack": "React Native, React, Expo",
         "description": "A thrilling 3D arcade game with minimalist design and dynamic gameplay!",
         "description_ru":"Захватывающая 3D-аркадная игра с минималистичным дизайном и динамичным игровым процессом!",
-        "link": "https://app.ikochetkov.ru/gravitation-cube",
+        "link": "https://inkochetkov.github.io/app/#/Gravitation%20Cube",
         "img": "/image/gravitation-cube/300_500.png",
         "year": "2024",
         "images": [
@@ -75,7 +74,7 @@
             "/image/gravitation-cube/1320x2868-2.png"
         ],
         "app":{
-            "category": "3D arcade game",
+            "category": "Game",
             "linkAppStore": "https://apps.apple.com/ru/app/gravitation-cube/id6740345780",
             "linkRuStore":"https://www.rustore.ru/catalog/app/com.mut.e.cube.gravitation",
             "linkGallery":"https://appgallery.huawei.com/#/app/C114139309",
@@ -86,14 +85,14 @@
         }
     },
     {   
-        "name": "BubbleTap",
+        "name": "bubble-tap",
         "type": "Mobile app",
         "title":"Mobile and cross-platform application - IOS, Android",
         "title_ru":"Мобильное и кроссплатформенное приложение - iOS, Android",
         "stack": "React Native, React, Expo",
-        "description":"3D Arcade game",
-        "description_ru":"3D аркадная игра",
-        "link": "https://app.ikochetkov.ru/bubble-tap",
+        "description":"2D Casual Game",
+        "description_ru":"2D казуальная игра",
+        "link": "https://inkochetkov.github.io/app/#/BubbleTap",
         "img": "/image/bubble-tap/300_500.png",
         "year": "2024",
         "images": [
@@ -101,10 +100,10 @@
             "/image/bubble-tap/1320x2868-2.png"
         ],
         "app":{
-            "category": "3D arcade game",
+            "category": "Casual game",
             "linkAppStore": "https://apps.apple.com/ru/app/bubble-tap/id6739352305",
             "linkRuStore":"https://www.rustore.ru/catalog/app/com.mut.e.bubble_tap",
-            "linkGallery":"https://appgallery.huawei.com/#/app/C113117975",
+            "linkGallery":"",
             "linkNashStore":"",
             "linkGooglePlay":"",
             "img": "/image/bubble-tap/512x512.png",
@@ -112,14 +111,14 @@
         }
     },
     {   
-        "name": "Psychology",
+        "name": "psychology",
         "type": "Mobile app",
         "title": "Mobile and cross-platform application - IOS, Android",
         "title_ru":"Мобильное и кроссплатформенное приложение - iOS, Android",
         "stack": "React Native, React, Expo",
         "description": "Mobile application on the topic of psychological tests",
         "description_ru":"Мобильное приложение на тему психологических тестов",
-        "link": "https://app.ikochetkov.ru/psychology",
+        "link": "https://inkochetkov.github.io/app/#/Psychology",
         "img": "/image/psychology/300_500.png",
         "year": "2024",
         "images": [
@@ -139,14 +138,14 @@
         }
     },
     {   
-        "name": "app.ikochetkov.ru",
+        "name": "app",
         "type": "Site",
         "title":"Application catalog site",
         "title_ru":"Сайт каталога приложений",
         "stack": "React",
         "description": "Catalog of mobile and cross-platform applications- IOS, Android",
         "description_ru":"Каталог мобильных и кроссплатформенных приложений — IOS, Android",
-        "link": "https://app.ikochetkov.ru/",
+        "link": "https://inkochetkov.github.io/app/",
         "img": "/image/app.ikochetkov.ru/300_500.png",
         "year": "2024",
         "images": [
