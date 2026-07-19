@@ -43,7 +43,7 @@
         "stack": "React Native, React, Expo",
         "description": "3D arcade game, space shuttle flight simulator",
         "description_ru":"3D аркадная игра, симулятор полета космического челнока",
-        "link": "https://inkochetkov.github.io/app/#/Another%20Flight",
+        "link": "https://inkochetkov.github.io/app/#/another-flight",
         "img": "/image/another-flight/300_500.png",
         "year": "2024",
         "images": [],
@@ -66,7 +66,7 @@
         "stack": "React Native, React, Expo",
         "description": "A thrilling 3D arcade game with minimalist design and dynamic gameplay!",
         "description_ru":"Захватывающая 3D-аркадная игра с минималистичным дизайном и динамичным игровым процессом!",
-        "link": "https://inkochetkov.github.io/app/#/Gravitation%20Cube",
+        "link": "https://inkochetkov.github.io/app/#/gravitation-cube",
         "img": "/image/gravitation-cube/300_500.png",
         "year": "2024",
         "images": [
@@ -92,7 +92,7 @@
         "stack": "React Native, React, Expo",
         "description":"2D Casual Game",
         "description_ru":"2D казуальная игра",
-        "link": "https://inkochetkov.github.io/app/#/BubbleTap",
+        "link": "https://inkochetkov.github.io/app/#/bubbl-tap",
         "img": "/image/bubble-tap/300_500.png",
         "year": "2024",
         "images": [
@@ -118,7 +118,7 @@
         "stack": "React Native, React, Expo",
         "description": "Mobile application on the topic of psychological tests",
         "description_ru":"Мобильное приложение на тему психологических тестов",
-        "link": "https://inkochetkov.github.io/app/#/Psychology",
+        "link": "https://inkochetkov.github.io/app/#/psychology",
         "img": "/image/psychology/300_500.png",
         "year": "2024",
         "images": [
