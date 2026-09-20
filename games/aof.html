@@ -5,63 +5,136 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 <title>Арена Ярости</title>
 <style>
+  /* ------------------------- ТЕМЫ (CSS-переменные) ------------------------- */
+  :root{
+    --bg:#0d0f13;
+    --ink:#e8eef7;
+    --muted:#93a2b8;
+    --muted2:#6d7c92;
+
+    --bar-bg:#1b1f27;
+    --bar-border:#2c3340;
+    --bar-ts:0 1px 3px #000;
+
+    --overlay:radial-gradient(circle at 50% 40%, #1a2030dd, #05070add);
+
+    --btn-bg:linear-gradient(180deg,#2b3548,#1a2130);
+    --btn-bg-h:linear-gradient(180deg,#3a4763,#232d40);
+    --btn-border:#3d4a63;
+    --btn-border-h:#5a6d90;
+
+    --perk-bg:linear-gradient(180deg,#232c3d,#161c28);
+    --perk-border:#34405a;
+
+    --gold:#ffd24a;
+    --cyan:#7fdcff;
+
+    --title-a:#ff4d4d;
+    --title-b:#ffd24a;
+    --title-shadow:0 4px 18px #ff4d4d55;
+
+    --stats-ts:0 2px 6px #000a;
+  }
+
+  html[data-theme="light"]{
+    --bg:#eef1f6;
+    --ink:#1a2230;
+    --muted:#55647c;
+    --muted2:#7b8798;
+
+    --bar-bg:#dde3ec;
+    --bar-border:#bfc9d9;
+    --bar-ts:0 1px 2px #ffffffcc;
+
+    --overlay:radial-gradient(circle at 50% 40%, #ffffffee, #d9e0ebee);
+
+    --btn-bg:linear-gradient(180deg,#ffffff,#e6ebf3);
+    --btn-bg-h:linear-gradient(180deg,#ffffff,#d2dae7);
+    --btn-border:#b6c1d2;
+    --btn-border-h:#8b9ab1;
+
+    --perk-bg:linear-gradient(180deg,#ffffff,#e9eef5);
+    --perk-border:#c2ccdb;
+
+    --gold:#b26b00;
+    --cyan:#1466a8;
+
+    --title-a:#d92b2b;
+    --title-b:#c47a00;
+    --title-shadow:0 4px 18px #d92b2b33;
+
+    --stats-ts:0 1px 3px #ffffffcc;
+  }
+
   *{margin:0;padding:0;box-sizing:border-box}
-  html,body{width:100%;height:100%;overflow:hidden;background:#0d0f13;
-    font-family:'Trebuchet MS',system-ui,sans-serif;color:#e8eef7;
-    user-select:none;-webkit-user-select:none;touch-action:none}
+  html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
+    font-family:'Trebuchet MS',system-ui,sans-serif;color:var(--ink);
+    user-select:none;-webkit-user-select:none;touch-action:none;
+    transition:background .25s ease, color .25s ease}
   canvas{display:block;position:absolute;inset:0;cursor:crosshair}
 
   /* ---------- HUD ---------- */
   #hud{position:absolute;inset:0;pointer-events:none;font-size:15px}
   .bars{position:absolute;left:18px;top:16px;width:290px;display:flex;flex-direction:column;gap:7px}
-  .bar{position:relative;height:22px;border-radius:11px;background:#1b1f27;
-       border:1px solid #2c3340;overflow:hidden;box-shadow:0 2px 10px #0007}
+  .bar{position:relative;height:22px;border-radius:11px;background:var(--bar-bg);
+       border:1px solid var(--bar-border);overflow:hidden;box-shadow:0 2px 10px #0002;
+       transition:background .25s ease, border-color .25s ease}
   .bar > i{position:absolute;inset:0;width:100%;transform-origin:left;transition:transform .12s linear}
   #hpFill{background:linear-gradient(90deg,#ff4d4d,#ff8a5c)}
   #xpFill{background:linear-gradient(90deg,#3ec6ff,#7d6bff)}
   .bar > span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-       font-size:12px;font-weight:700;text-shadow:0 1px 3px #000}
+       font-size:12px;font-weight:700;color:var(--ink);text-shadow:var(--bar-ts)}
   .bar.xp{height:14px;border-radius:7px}
   .bar.xp > span{font-size:10px}
 
   #stats{position:absolute;right:18px;top:16px;text-align:right;line-height:1.55;
-         text-shadow:0 2px 6px #000a}
-  #stats b{color:#ffd24a;font-size:18px}
-  #weaponName{font-size:18px;color:#7fdcff;font-weight:700;margin-top:6px}
-  #ammoText{font-size:22px;font-weight:700;color:#fff}
+         text-shadow:var(--stats-ts)}
+  #stats b{color:var(--gold);font-size:18px}
+  #weaponName{font-size:18px;color:var(--cyan);font-weight:700;margin-top:6px}
+  #ammoText{font-size:22px;font-weight:700;color:var(--ink)}
 
   /* ---------- Оверлеи ---------- */
   .overlay{position:absolute;inset:0;display:flex;flex-direction:column;
     align-items:center;justify-content:center;gap:18px;text-align:center;
-    background:radial-gradient(circle at 50% 40%,#1a2030dd,#05070add);
-    backdrop-filter:blur(3px);z-index:10;padding:20px}
+    background:var(--overlay);
+    backdrop-filter:blur(3px);z-index:10;padding:20px;
+    transition:background .25s ease}
   .hidden{display:none!important}
   h1{font-size:clamp(32px,7vw,64px);letter-spacing:3px;
-     background:linear-gradient(90deg,#ff4d4d,#ffd24a,#ff4d4d);
+     background:linear-gradient(90deg,var(--title-a),var(--title-b),var(--title-a));
      -webkit-background-clip:text;background-clip:text;color:transparent;
-     filter:drop-shadow(0 4px 18px #ff4d4d55)}
-  h2{font-size:clamp(20px,4vw,32px);color:#ffd24a;letter-spacing:2px}
-  .sub{color:#93a2b8;max-width:520px;line-height:1.6;font-size:15px}
+     filter:drop-shadow(var(--title-shadow))}
+  h2{font-size:clamp(20px,4vw,32px);color:var(--gold);letter-spacing:2px}
+  .sub{color:var(--muted);max-width:520px;line-height:1.6;font-size:15px}
+  .sub.dim{color:var(--muted2);font-size:13px}
   button{cursor:pointer;font-family:inherit;font-weight:700;font-size:17px;
-    padding:13px 34px;border-radius:12px;border:1px solid #3d4a63;
-    background:linear-gradient(180deg,#2b3548,#1a2130);color:#e8eef7;
-    transition:.15s;letter-spacing:1px}
-  button:hover{background:linear-gradient(180deg,#3a4763,#232d40);
-    border-color:#5a6d90;transform:translateY(-2px)}
+    padding:13px 34px;border-radius:12px;border:1px solid var(--btn-border);
+    background:var(--btn-bg);color:var(--ink);
+    transition:background .18s, border-color .18s, transform .15s, color .18s;letter-spacing:1px}
+  button:hover{background:var(--btn-bg-h);border-color:var(--btn-border-h);
+    transform:translateY(-2px)}
   button:active{transform:translateY(0)}
 
   .langBtn{padding:8px 16px;font-size:14px;letter-spacing:1px;border-radius:8px;}
   .langBtn:hover{transform:translateY(-1px);}
+  .langBtn.active{border-color:var(--gold);background:var(--btn-bg-h)}
+
+  /* Кнопка переключения темы */
+  #themeBtn{position:absolute;top:16px;left:50%;transform:translateX(-50%);
+    z-index:20;pointer-events:auto;padding:9px 14px;font-size:17px;line-height:1;
+    border-radius:11px}
+  #themeBtn:hover{transform:translateX(-50%) translateY(-2px)}
+  #themeBtn:active{transform:translateX(-50%)}
 
   #perkList{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;max-width:900px}
   .perk{width:230px;padding:20px 16px;border-radius:14px;cursor:pointer;
-    background:linear-gradient(180deg,#232c3d,#161c28);border:1px solid #34405a;
-    transition:.15s;text-align:center}
-  .perk:hover{border-color:#ffd24a;transform:translateY(-4px);
-    box-shadow:0 10px 30px #000a,0 0 0 1px #ffd24a55}
+    background:var(--perk-bg);border:1px solid var(--perk-border);
+    transition:background .2s, border-color .15s, transform .15s, box-shadow .15s;text-align:center}
+  .perk:hover{border-color:var(--gold);transform:translateY(-4px);
+    box-shadow:0 10px 30px #0003, 0 0 0 1px var(--gold)}
   .perk .ic{font-size:30px;margin-bottom:8px}
-  .perk .nm{font-weight:700;color:#ffd24a;margin-bottom:6px;font-size:16px}
-  .perk .ds{font-size:13px;color:#9fb0c7;line-height:1.45}
+  .perk .nm{font-weight:700;color:var(--gold);margin-bottom:6px;font-size:16px}
+  .perk .ds{font-size:13px;color:var(--muted);line-height:1.45}
 </style>
 </head>
 <body>
@@ -81,12 +154,15 @@
   </div>
 </div>
 
+<!-- Переключатель темы (виден всегда) -->
+<button id="themeBtn" title="Сменить тему">☀️</button>
+
 <!-- Меню -->
 <div id="menu" class="overlay">
   <h1 id="gameTitle">АРЕНА ЯРОСТИ</h1>
   <p class="sub" id="gameSubtitle">Волны монстров идут одна за другой. Убивай, качайся, выбирай перки
      и подбирай оружие. Как долго ты продержишься?</p>
-  <p class="sub" style="color:#6d7c92;font-size:13px" id="gameControls">
+  <p class="sub dim" id="gameControls">
      WASD — движение &nbsp;•&nbsp; Мышь — прицел &nbsp;•&nbsp; ЛКМ — огонь</p>
   <button id="startBtn">НАЧАТЬ</button>
   <div style="display:flex;gap:10px;margin-top:10px;">
@@ -226,6 +302,51 @@ function t(key, params) {
     }
   }
   return str;
+}
+
+/* -------------------------------- Тема --------------------------------- */
+let currentTheme = 'dark';
+
+const CT = {
+  dark: {
+    bg:            '#12151b',
+    grid:          '#1c212b',
+    vignette:      '#000000bb',
+    decalAlpha:    1,
+    playerShadow:  'rgba(0,0,0,0.4)',
+    crosshair:     'rgba(255,255,255,0.19)',
+    joystick:      '#ffffff',
+    hpBarBg:       'rgba(0,0,0,0.67)',
+    msg:           '#ffd24a',
+    msgGlow:       '#ff6a00',
+    eye:           '#12060a',
+  },
+  light: {
+    bg:            '#e9edf3',
+    grid:          '#ccd5e2',
+    vignette:      'rgba(116,132,163,0.42)',
+    decalAlpha:    0.5,
+    playerShadow:  'rgba(30,45,70,0.18)',
+    crosshair:     'rgba(0,0,0,0.30)',
+    joystick:      '#1a2230',
+    hpBarBg:       'rgba(0,0,0,0.35)',
+    msg:           '#b26b00',
+    msgGlow:       '#ffd88a',
+    eye:           '#12060a',
+  }
+};
+const ct = ()=> CT[currentTheme];
+
+function setTheme(name){
+  currentTheme = (name === 'light') ? 'light' : 'dark';
+  document.documentElement.dataset.theme = currentTheme;
+  const btn = document.getElementById('themeBtn');
+  if(btn){
+    // показываем иконку той темы, на которую переключимся
+    btn.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
+    btn.title = currentTheme === 'dark' ? 'Светлая тема' : 'Тёмная тема';
+  }
+  try{ localStorage.setItem('aof-theme', currentTheme); }catch(e){}
 }
 
 /* -------------------------------- Звук --------------------------------- */
@@ -583,9 +704,9 @@ function hurtPlayer(amount){
     game.state = 'dead';
     spawnParticles(player.x, player.y, 40, '#ff4d4d', 420, 0.9, 5);
     document.getElementById('deadStats').innerHTML =
-      `${t('wave')}: <b style="color:#ffd24a">${game.wave}</b> &nbsp;•&nbsp; ` +
-      `${t('kills')}: <b style="color:#ffd24a">${game.kills}</b> &nbsp;•&nbsp; ` +
-      `${t('level')}: <b style="color:#ffd24a">${player.level}</b>`;
+      `${t('wave')}: <b style="color:var(--gold)">${game.wave}</b> &nbsp;•&nbsp; ` +
+      `${t('kills')}: <b style="color:var(--gold)">${game.kills}</b> &nbsp;•&nbsp; ` +
+      `${t('level')}: <b style="color:var(--gold)">${player.level}</b>`;
     document.getElementById('dead').classList.remove('hidden');
     blip(90, 0.9, 'sawtooth', 0.12, 0.25);
   }
@@ -832,7 +953,7 @@ function drawGrid(){
   const cam = game.camera, g = 90;
   const x0 = Math.floor(cam.x/g)*g;
   const y0 = Math.floor(cam.y/g)*g;
-  ctx.strokeStyle = '#1c212b';
+  ctx.strokeStyle = ct().grid;
   ctx.lineWidth = 1;
   ctx.beginPath();
   for(let x = x0; x < cam.x + W + g; x += g){
@@ -845,8 +966,9 @@ function drawGrid(){
 }
 
 function drawDecals(){
+  const mult = ct().decalAlpha;
   for(const d of decals){
-    ctx.globalAlpha = d.alpha;
+    ctx.globalAlpha = d.alpha * mult;
     ctx.fillStyle = d.color;
     ctx.beginPath();
     ctx.arc(d.x, d.y, d.r, 0, TAU);
@@ -856,7 +978,6 @@ function drawDecals(){
 }
 
 function drawPickups(){
-  const t = performance.now()/1000;
   for(const p of pickups){
     const y = p.y + Math.sin(p.bob)*3;
     const fade = p.life < 3 ? (Math.sin(p.life*14)*0.5+0.5) : 1;
@@ -882,6 +1003,9 @@ function drawPickups(){
 }
 
 function drawEnemies(){
+  const eyeCol = ct().eye;
+  const barBg  = ct().hpBarBg;
+
   for(const e of enemies){
     ctx.fillStyle = e.flash > 0 ? '#ffffff' : e.color;
     ctx.beginPath();
@@ -898,13 +1022,13 @@ function drawEnemies(){
     const px = -Math.sin(a) * e.r * 0.32;
     const py =  Math.cos(a) * e.r * 0.32;
     const er = Math.max(2, e.r * 0.16);
-    ctx.fillStyle = '#12060a';
+    ctx.fillStyle = eyeCol;
     ctx.beginPath(); ctx.arc(e.x + ex + px, e.y + ey + py, er, 0, TAU); ctx.fill();
     ctx.beginPath(); ctx.arc(e.x + ex - px, e.y + ey - py, er, 0, TAU); ctx.fill();
 
     if(e.maxHp > 60 && e.hp < e.maxHp){
       const w = e.r * 2.2;
-      ctx.fillStyle = '#000a';
+      ctx.fillStyle = barBg;
       ctx.fillRect(e.x - w/2, e.y - e.r - 11, w, 4);
       ctx.fillStyle = '#ff4d4d';
       ctx.fillRect(e.x - w/2, e.y - e.r - 11, w * (e.hp/e.maxHp), 4);
@@ -947,7 +1071,7 @@ function drawPlayer(){
   const ang = player.aimAngle;
   const bob = Math.sin(player.walkPhase) * 1.5;
 
-  ctx.fillStyle = '#0006';
+  ctx.fillStyle = ct().playerShadow;
   ctx.beginPath();
   ctx.ellipse(player.x, player.y + player.r*0.85, player.r*0.95, player.r*0.45, 0, 0, TAU);
   ctx.fill();
@@ -989,7 +1113,7 @@ function drawPlayer(){
   ctx.stroke();
 
   if(!IS_TOUCH){
-    ctx.strokeStyle = '#ffffff30';
+    ctx.strokeStyle = ct().crosshair;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.arc(worldMouse.x, worldMouse.y, 9, 0, TAU);
@@ -1006,7 +1130,7 @@ function drawPlayer(){
 function drawJoystick(){
   if(!IS_TOUCH || !stick.active) return;
   ctx.globalAlpha = 0.22;
-  ctx.fillStyle = '#fff';
+  ctx.fillStyle = ct().joystick;
   ctx.beginPath(); ctx.arc(stick.ox, stick.oy, 62, 0, TAU); ctx.fill();
   ctx.globalAlpha = 0.4;
   ctx.beginPath();
@@ -1022,15 +1146,15 @@ function drawMessage(){
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.font = 'bold 52px "Trebuchet MS", sans-serif';
-  ctx.fillStyle = '#ffd24a';
-  ctx.shadowBlur = 26; ctx.shadowColor = '#ff6a00';
+  ctx.fillStyle = ct().msg;
+  ctx.shadowBlur = 26; ctx.shadowColor = ct().msgGlow;
   ctx.fillText(game.message, W/2, H*0.22);
   ctx.shadowBlur = 0;
   ctx.globalAlpha = 1;
 }
 
 function render(){
-  ctx.fillStyle = '#12151b';
+  ctx.fillStyle = ct().bg;
   ctx.fillRect(0, 0, W, H);
 
   const sh = game.shake;
@@ -1052,7 +1176,7 @@ function render(){
 
   const vg = ctx.createRadialGradient(W/2, H/2, Math.min(W,H)*0.35, W/2, H/2, Math.max(W,H)*0.78);
   vg.addColorStop(0, 'transparent');
-  vg.addColorStop(1, '#000000bb');
+  vg.addColorStop(1, ct().vignette);
   ctx.fillStyle = vg;
   ctx.fillRect(0, 0, W, H);
 
@@ -1102,12 +1226,11 @@ function applyLanguage() {
   document.getElementById('waveLabel').textContent = t('wave');
   document.getElementById('killsLabel').textContent = t('kills');
   document.title = t('title');
-  
+
   updateHUD();
 
   document.querySelectorAll('.langBtn').forEach(btn => {
-    btn.style.background = btn.dataset.lang === currentLang ? '#3a4763' : '';
-    btn.style.borderColor = btn.dataset.lang === currentLang ? '#ffd24a' : '';
+    btn.classList.toggle('active', btn.dataset.lang === currentLang);
   });
 }
 
@@ -1171,6 +1294,13 @@ document.querySelectorAll('.langBtn').forEach(btn => {
   });
 });
 
+// Переключатель темы
+document.getElementById('themeBtn').addEventListener('click', ()=>{
+  initAudio();
+  setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+  blip(currentTheme === 'dark' ? 320 : 620, 0.08, 'triangle', 0.05, 1.4);
+});
+
 // Инициализация
 resize();
 game.camera.x = -W/2;
@@ -1193,6 +1323,11 @@ if(!CanvasRenderingContext2D.prototype.roundRect){
     return this;
   };
 }
+
+// Восстанавливаем сохранённую тему
+let savedTheme = 'dark';
+try{ savedTheme = localStorage.getItem('aof-theme') || 'dark'; }catch(e){}
+setTheme(savedTheme);
 
 applyLanguage();
 requestAnimationFrame(loop);
