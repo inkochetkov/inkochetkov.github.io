@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tower Defense — Защита башнями</title>
+<style>
+  :root {
+    --bg1:#1e3327; --bg2:#0a0f0c;
+    --panel-bg:#182619; --panel-bg2:#121c14;
+    --border:#2a3f31; --border-light:#3b5c44;
+    --text:#e8f2ea; --text-dim:#9db3a5;
+    --accent:#9ff0a8; --gold:#ffd75e;
+    --btn-bg:#28402f; --btn-hover:#33543c;
+    --stat-bg:#1d2c21; --stat-border:#2c4133;
+    --tower-bg:#1d2c21; --tower-bg-hover:#24382a;
+    --modal-bg:#0e1611; --modal-shadow:rgba(0,0,0,.7);
+    --overlay-bg:rgba(6,10,8,.86);
+  }
+  [data-theme="light"] {
+    --bg1:#dbe7de; --bg2:#f6faf7;
+    --panel-bg:#ffffff; --panel-bg2:#eef4ef;
+    --border:#c4d4c8; --border-light:#9fbaa8;
+    --text:#1c2a21; --text-dim:#5a6f61;
+    --accent:#1d7d3d; --gold:#a67c00;
+    --btn-bg:#e3efe5; --btn-hover:#cfdfd3;
+    --stat-bg:#f0f6f1; --stat-border:#cfe0d4;
+    --tower-bg:#f5faf6; --tower-bg-hover:#e4eee6;
+    --modal-bg:#ffffff; --modal-shadow:rgba(0,0,0,.25);
+    --overlay-bg:rgba(230,240,232,.9);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(circle at 50% -10%, var(--bg1) 0%, var(--bg2) 65%);
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    color:var(--text);padding:14px;user-select:none;
+    -webkit-tap-highlight-color:transparent;
+    transition:background .25s,color .25s;
+  }
+  .wrap{width:820px;max-width:100%;}
+
+  header{
+    display:flex;gap:6px;align-items:center;flex-wrap:wrap;
+    background:linear-gradient(var(--panel-bg),var(--panel-bg2));
+    border:1px solid var(--border);border-bottom:none;
+    border-radius:14px 14px 0 0;padding:9px 11px;
+    transition:background .25s,border-color .25s;
+  }
+  .stat{
+    display:flex;align-items:center;gap:5px;
+    background:var(--stat-bg);border:1px solid var(--stat-border);border-radius:8px;
+    padding:6px 10px;font-size:13.5px;font-weight:700;min-width:56px;
+  }
+  .stat span{color:var(--accent);}
+  .spacer{flex:1}
+
+  .btn{
+    font:inherit;font-weight:700;color:var(--text);cursor:pointer;
+    background:var(--btn-bg);border:1px solid var(--border-light);border-radius:8px;
+    padding:7px 12px;transition:.15s;white-space:nowrap;
+  }
+  .btn:hover:not(:disabled){background:var(--btn-hover);}
+  .btn:active:not(:disabled){transform:translateY(1px);}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
+  .btn.small{padding:6px 10px;font-size:12.5px;}
+  .btn.icon{padding:6px 10px;font-size:15px;line-height:1;}
+  .btn.wave{
+    background:linear-gradient(#3d7a4a,#2b5836);border-color:#5da56c;color:#fff;
+    flex:1 1 100%;margin-top:4px;
+  }
+  .btn.wave:hover:not(:disabled){background:linear-gradient(#4a8f58,#356842);}
+  [data-theme="light"] .btn.wave{color:#fff;}
+
+  .stage{position:relative;line-height:0;}
+  canvas{
+    display:block;width:820px;max-width:100%;height:auto;
+    background:#16221a;cursor:crosshair;
+    border-left:1px solid var(--border);border-right:1px solid var(--border);
+    transition:border-color .25s;
+  }
+
+  #towerPanel{
+    position:absolute;top:10px;right:10px;width:218px;
+    background:var(--modal-bg);border:1px solid var(--border-light);border-radius:11px;
+    padding:11px;font-size:13px;display:none;line-height:1.35;
+    box-shadow:0 8px 24px var(--modal-shadow);
+  }
+  #towerPanel.show{display:block;}
+  .tp-title{font-weight:800;font-size:14px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:6px;}
+  .tp-lvl{font-size:11px;background:var(--stat-bg);border-radius:6px;padding:2px 6px;color:var(--gold);white-space:nowrap;}
+  .tp-stats{color:var(--text-dim);font-size:12px;margin-bottom:9px;line-height:1.5;}
+  .tp-stats b{color:var(--text);}
+  .tp-btns{display:flex;gap:6px;}
+  .tp-btns button{flex:1;font-size:12px;padding:7px 4px;}
+
+  #overlay{
+    position:absolute;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:6px;line-height:1.4;
+    background:var(--overlay-bg);backdrop-filter:blur(4px);
+    text-align:center;padding:20px;
+  }
+  #overlay.hidden{display:none;}
+  #overlay h2{margin:0 0 6px;font-size:36px;letter-spacing:1px;}
+  #overlay h2.lose{color:#ff7a7a;}
+  #overlay h2.win{color:#7ee08a;}
+  #overlay p{margin:2px 0;color:var(--text-dim);font-size:15px;}
+  #overlay b{color:var(--gold);}
+  #overlay .btn{margin-top:16px;font-size:16px;padding:11px 28px;}
+
+  .shop{
+    display:flex;gap:7px;padding:10px 11px;flex-wrap:wrap;
+    background:linear-gradient(var(--panel-bg2),var(--panel-bg));
+    border:1px solid var(--border);border-top:none;
+    border-radius:0 0 14px 14px;
+    transition:background .25s,border-color .25s;
+  }
+  .tower-btn{
+    flex:1 1 100px;min-width:100px;
+    display:flex;flex-direction:column;gap:1px;align-items:flex-start;
+    background:var(--tower-bg);border:1px solid var(--stat-border);border-left:4px solid var(--stat-border);
+    border-radius:9px;padding:7px 9px;cursor:pointer;color:var(--text);
+    font:inherit;text-align:left;transition:.15s;
+  }
+  .tower-btn:hover{background:var(--tower-bg-hover);}
+  .tower-btn.selected{border-color:var(--accent);box-shadow:0 0 0 2px rgba(126,224,138,.22);}
+  .tower-btn.disabled{opacity:.42;cursor:not-allowed;}
+  .tower-btn .tname{font-weight:800;font-size:13px;}
+  .tower-btn .tcost{font-size:12px;color:var(--gold);font-weight:700;}
+  .tower-btn .tdesc{font-size:11px;color:var(--text-dim);line-height:1.2;}
+
+  .modal{
+    position:fixed;inset:0;background:rgba(0,0,0,.6);
+    display:flex;align-items:center;justify-content:center;
+    z-index:100;padding:16px;backdrop-filter:blur(3px);
+  }
+  [data-theme="light"] .modal{background:rgba(30,40,35,.35);}
+  .modal.hidden{display:none;}
+  .modal-content{
+    background:var(--modal-bg);border:1px solid var(--border-light);
+    border-radius:16px;max-width:780px;width:100%;max-height:88vh;overflow:hidden;
+    display:flex;flex-direction:column;
+    box-shadow:0 20px 60px var(--modal-shadow);
+  }
+  .modal-header{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:14px 18px;border-bottom:1px solid var(--border);
+    background:linear-gradient(var(--panel-bg),var(--panel-bg2));
+  }
+  .modal-header h2{margin:0;font-size:19px;}
+  .modal-body{padding:16px 18px;overflow-y:auto;line-height:1.5;}
+  .modal-body h3{font-size:15px;margin:16px 0 8px;color:var(--accent);}
+  .modal-body h3:first-child{margin-top:0;}
+  .modal-body p{margin:6px 0;font-size:13.5px;color:var(--text-dim);}
+  .modal-body p b{color:var(--text);}
+
+  .info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin:8px 0;}
+  .info-card{
+    background:var(--panel-bg2);border:1px solid var(--border);border-radius:9px;
+    padding:9px 11px;font-size:12.5px;
+  }
+  .info-card .ic-title{font-weight:800;font-size:13.5px;margin-bottom:3px;display:flex;justify-content:space-between;}
+  .info-card .ic-cost{color:var(--gold);font-size:11.5px;}
+  .info-card .ic-desc{color:var(--text-dim);font-size:11.5px;line-height:1.35;}
+
+  .diff-option{
+    display:flex;gap:10px;align-items:flex-start;
+    background:var(--panel-bg2);border:1px solid var(--border);border-radius:10px;
+    padding:10px 12px;margin-bottom:7px;cursor:pointer;transition:.15s;
+  }
+  .diff-option:hover{background:var(--tower-bg-hover);}
+  .diff-option.selected{border-color:var(--accent);box-shadow:0 0 0 2px rgba(126,224,138,.18);}
+  .diff-option input{margin-top:3px;accent-color:var(--accent);}
+  .diff-option .dname{font-weight:800;font-size:14px;}
+  .diff-option .ddesc{color:var(--text-dim);font-size:12.5px;line-height:1.4;}
+
+  @media (max-width:640px){
+    .stat{font-size:12px;padding:5px 8px;min-width:0;}
+    .tower-btn .tdesc{display:none;}
+    .btn.small{padding:5px 8px;font-size:11.5px;}
+    .btn.icon{padding:5px 8px;}
+    header{gap:4px;padding:7px 8px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="stat" title="Money">💰<span id="money">160</span></div>
+    <div class="stat" title="Lives">❤️<span id="lives">20</span></div>
+    <div class="stat" title="Wave">🌊<span id="wave">0</span></div>
+    <div class="stat" title="Score">⭐<span id="score">0</span></div>
+    <div class="stat" id="towerCountStat" style="display:none" title="Towers">🏰<span id="towerCount">0/50</span></div>
+    <div class="spacer"></div>
+    <button id="themeBtn" class="btn icon" title="Theme">☀</button>
+    <button id="langBtn" class="btn small" title="Language">EN</button>
+    <button id="infoBtn" class="btn icon" title="Info">ℹ</button>
+    <button id="speedBtn" class="btn small">⏩ x1</button>
+    <button id="pauseBtn" class="btn small">⏸</button>
+  </header>
+
+  <div class="stage">
+    <canvas id="game" width="820" height="600"></canvas>
+    <div id="towerPanel"></div>
+    <div id="overlay" class="hidden">
+      <h2 id="overlayTitle" class="lose">Игра окончена</h2>
+      <p><span id="overlayWaveLabel">Пройдено волн</span>: <b id="finalWave">0</b></p>
+      <p><span id="overlayScoreLabel">Очки</span>: <b id="finalScore">0</b></p>
+      <button class="btn" id="restartBtn">Играть снова</button>
+    </div>
+  </div>
+
+  <div class="shop" id="shop"></div>
+</div>
+
+<div id="infoModal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="infoTitle">Информация</h2>
+      <button class="btn icon" id="closeInfoBtn">✕</button>
+    </div>
+    <div class="modal-body" id="infoBody"></div>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+
+/* =========================================================
+   СОХРАНЕНИЕ НАСТРОЕК
+   ========================================================= */
+const STORAGE_KEY = 'td_settings_v2';
+const settings = { theme: 'dark', lang: 'ru', difficulty: 'easy' };
+try {
+  const s = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  if (s.theme) settings.theme = s.theme;
+  if (s.lang) settings.lang = s.lang;
+  if (s.difficulty) settings.difficulty = s.difficulty;
+} catch (e) {}
+function saveSettings() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(settings)); } catch (e) {}
+}
+
+/* =========================================================
+   ПЕРЕВОДЫ
+   ========================================================= */
+const I18N = {
+  ru: {
+    money:'Деньги', lives:'Жизни', wave:'Волна', score:'Очки', towers:'Башни',
+    pause:'Пауза', resume:'Продолжить',
+    startWave:'▶ Начать волну {n}',
+    waveInProgress:'⏳ Волна {n} идёт…',
+    upgrade:'Улучшить', max:'МАКС', sell:'Продать',
+    gameOverTitle:'Игра окончена', victoryTitle:'Победа!',
+    wavesSurvived:'Пройдено волн', finalScore:'Очки', playAgain:'Играть снова',
+    infoTitle:'Информация',
+    howToTitle:'Как играть',
+    howToText:'Стройте башни вдоль дороги, чтобы остановить врагов. Выберите башню в магазине ниже, затем кликните по свободной клетке карты. Клик по уже построенной башне открывает меню улучшения или продажи. Волны приходят одна за другой — выживайте как можно дольше!',
+    towersTitle:'Башни',
+    difficultyTitle:'Уровень сложности',
+    difficultyNote:'Смена сложности перезапустит игру.',
+    range:'Радиус', damage:'Урон', speed:'Скорость', splash:'Сплеш', chain:'Цепь',
+    slow:'Замедление', burn:'Горение', dps:'урон/сек',
+    easy:'Лёгкий', medium:'Средний', hard:'Трудный', impossible:'Невозможный',
+    easyDesc:'Классическая карта, максимум 100 волн (после — победа), улучшения до 5 уровня.',
+    mediumDesc:'Более длинная карта с меньшим числом мест для башен. 200 волн, улучшения до 10 уровня.',
+    hardDesc:'Очень длинная карта. 300 волн, улучшения до 50 уровня, максимум 50 башен.',
+    impossibleDesc:'Карта-гребёнка. Бесконечные волны, улучшения до 100 уровня, максимум 50 башен.',
+    waveShort:'Волна', maxWave:'Макс. волн', upgradeShort:'Улучшений', maxTowersShort:'Лимит башен',
+    endless:'Бесконечно', levelShort:'Ур.',
+    towerArrowName:'Лучник', towerArrowDesc:'Быстрая одиночная атака',
+    towerCannonName:'Пушка', towerCannonDesc:'Урон по площади',
+    towerFrostName:'Лёд', towerFrostDesc:'Замедляет врагов',
+    towerTeslaName:'Тесла', towerTeslaDesc:'Молния по цепочке',
+    towerFireName:'Огонь', towerFireDesc:'Поджигает врагов',
+    selectDifficulty:'Выберите сложность',
+    canPlace:'Можно ставить', cannotPlace:'Нельзя ставить'
+  },
+  en: {
+    money:'Money', lives:'Lives', wave:'Wave', score:'Score', towers:'Towers',
+    pause:'Pause', resume:'Resume',
+    startWave:'▶ Start wave {n}',
+    waveInProgress:'⏳ Wave {n} in progress…',
+    upgrade:'Upgrade', max:'MAX', sell:'Sell',
+    gameOverTitle:'Game over', victoryTitle:'Victory!',
+    wavesSurvived:'Waves survived', finalScore:'Score', playAgain:'Play again',
+    infoTitle:'Info',
+    howToTitle:'How to play',
+    howToText:'Build towers along the path to stop the enemies. Pick a tower from the shop below, then click an empty cell on the map. Click a built tower to open upgrade / sell menu. Waves keep coming — survive as long as you can!',
+    towersTitle:'Towers',
+    difficultyTitle:'Difficulty',
+    difficultyNote:'Changing difficulty restarts the game.',
+    range:'Range', damage:'Damage', speed:'Speed', splash:'Splash', chain:'Chain',
+    slow:'Slow', burn:'Burn', dps:'dps',
+    easy:'Easy', medium:'Medium', hard:'Hard', impossible:'Impossible',
+    easyDesc:'Classic map, up to 100 waves (victory after), upgrades up to level 5.',
+    mediumDesc:'Longer map with fewer building spots. 200 waves, upgrades up to level 10.',
+    hardDesc:'Very long map. 300 waves, upgrades up to level 50, max 50 towers.',
+    impossibleDesc:'Comb-shaped map. Endless waves, upgrades up to level 100, max 50 towers.',
+    waveShort:'Wave', maxWave:'Max waves', upgradeShort:'Upgrades', maxTowersShort:'Tower limit',
+    endless:'Endless', levelShort:'Lv.',
+    towerArrowName:'Archer', towerArrowDesc:'Fast single-target',
+    towerCannonName:'Cannon', towerCannonDesc:'Splash damage',
+    towerFrostName:'Frost', towerFrostDesc:'Slows enemies',
+    towerTeslaName:'Tesla', towerTeslaDesc:'Chain lightning',
+    towerFireName:'Fire', towerFireDesc:'Burns enemies',
+    selectDifficulty:'Select difficulty',
+    canPlace:'Can build', cannotPlace:'Cannot build'
+  }
+};
+function t(key, vars) {
+  let s = (I18N[settings.lang] && I18N[settings.lang][key]) || key;
+  if (vars) for (const k in vars) s = s.replace('{' + k + '}', vars[k]);
+  return s;
+}
+
+/* =========================================================
+   КАРТЫ (пути)
+   ========================================================= */
+const MAPS = {
+  easy: [[-1,7],[3,7],[3,3],[8,3],[8,11],[12,11],[12,6],[16,6],[16,13],[19,13]],
+  medium: [[-1,2],[3,2],[3,6],[7,6],[7,2],[11,2],[11,10],[5,10],[5,13],[15,13],[15,8],[19,8]],
+  hard: [[-1,1],[18,1],[18,4],[1,4],[1,7],[18,7],[18,10],[1,10],[1,13],[19,13]],
+  impossible: [[-1,12],[4,12],[4,3],[8,3],[8,12],[12,12],[12,3],[16,3],[16,12],[19,12]]
+};
+
+/* =========================================================
+   КОНФИГИ СЛОЖНОСТИ
+   ========================================================= */
+const DIFFICULTIES = {
+  easy:       { mapKey:'easy',       maxWaves:100,      maxUpgrade:5,   maxTowers:Infinity, startMoney:160 },
+  medium:     { mapKey:'medium',     maxWaves:200,      maxUpgrade:10,  maxTowers:Infinity, startMoney:170 },
+  hard:       { mapKey:'hard',       maxWaves:300,      maxUpgrade:50,  maxTowers:50,       startMoney:200 },
+  impossible: { mapKey:'impossible', maxWaves:Infinity, maxUpgrade:100, maxTowers:50,       startMoney:220 }
+};
+function DIFF() { return DIFFICULTIES[settings.difficulty]; }
+
+/* =========================================================
+   КОНСТАНТЫ / КАНВАС
+   ========================================================= */
+const CELL = 40, COLS = 20, ROWS = 15;
+const W = COLS * CELL, H = ROWS * CELL;
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const panel = document.getElementById('towerPanel');
+const overlay = document.getElementById('overlay');
+const infoModal = document.getElementById('infoModal');
+const infoBody = document.getElementById('infoBody');
+const shopEl = document.getElementById('shop');
+const moneyEl = document.getElementById('money');
+const livesEl = document.getElementById('lives');
+const waveEl = document.getElementById('wave');
+const scoreEl = document.getElementById('score');
+const towerCountStat = document.getElementById('towerCountStat');
+const towerCountEl = document.getElementById('towerCount');
+const speedBtn = document.getElementById('speedBtn');
+const pauseBtn = document.getElementById('pauseBtn');
+const themeBtn = document.getElementById('themeBtn');
+const langBtn = document.getElementById('langBtn');
+const overlayTitle = document.getElementById('overlayTitle');
+
+/* =========================================================
+   ЦВЕТА КАНВАСА (по теме)
+   ========================================================= */
+const CT_DARK = {
+  bg:'#16221a', cellAlt:'rgba(255,255,255,0.013)', grid:'rgba(255,255,255,0.035)',
+  pathOuter:'#332b21', pathInner:'#6b5a42', pathDash:'rgba(226,205,160,0.22)',
+  portal:'rgba(170,100,240,0.85)', portalGlow:'rgba(170,100,240,0)',
+  baseGlow:'rgba(224,82,82,0.14)', baseStroke:'rgba(224,82,82,0.55)',
+  baseFill1:'#ff8a8a', baseFill2:'#c0392b', baseStroke2:'#ffd0d0',
+  plat:'#243026', platStroke:'#3d5344', core:'rgba(255,255,255,0.55)',
+  shadow:'rgba(0,0,0,0.28)', eStroke:'rgba(0,0,0,0.42)', eHi:'rgba(255,255,255,0.28)',
+  hpBg:'rgba(0,0,0,0.55)', lvlText:'#ffd75e',
+  validFill:'rgba(120,220,140,0.10)', validStroke:'rgba(120,220,140,0.55)',
+  badFill:'rgba(220,90,90,0.10)', badStroke:'rgba(220,90,90,0.55)',
+  selFill:'rgba(255,225,130,0.07)', selStroke:'rgba(255,225,130,0.6)', selOutline:'#ffe08a',
+  freezeFill:'rgba(120,225,255,0.35)', freezeStroke:'rgba(160,240,255,0.8)',
+  fire1:'rgba(255,150,50,0.75)', fire2:'rgba(255,80,20,0.4)', burnCore:'rgba(255,220,120,0.9)',
+  boomFill:'rgba(255,150,50,0.22)', boomStroke:'#ffb347',
+  light:'#d9b8ff', lightGlow:'#b06ee8'
+};
+const CT_LIGHT = {
+  bg:'#e2ece5', cellAlt:'rgba(0,0,0,0.02)', grid:'rgba(0,0,0,0.05)',
+  pathOuter:'#b5a68a', pathInner:'#e8dcc2', pathDash:'rgba(120,90,40,0.28)',
+  portal:'rgba(130,60,200,0.85)', portalGlow:'rgba(130,60,200,0)',
+  baseGlow:'rgba(200,50,50,0.15)', baseStroke:'rgba(200,50,50,0.6)',
+  baseFill1:'#e85050', baseFill2:'#a02020', baseStroke2:'#ffffff',
+  plat:'#c8d4cb', platStroke:'#8ba394', core:'rgba(255,255,255,0.75)',
+  shadow:'rgba(0,0,0,0.15)', eStroke:'rgba(0,0,0,0.35)', eHi:'rgba(255,255,255,0.5)',
+  hpBg:'rgba(255,255,255,0.75)', lvlText:'#a67c00',
+  validFill:'rgba(60,180,80,0.18)', validStroke:'rgba(60,180,80,0.7)',
+  badFill:'rgba(200,60,60,0.18)', badStroke:'rgba(200,60,60,0.7)',
+  selFill:'rgba(180,140,0,0.10)', selStroke:'rgba(180,140,0,0.7)', selOutline:'#b8860b',
+  freezeFill:'rgba(80,180,220,0.35)', freezeStroke:'rgba(60,150,200,0.8)',
+  fire1:'rgba(220,110,30,0.85)', fire2:'rgba(200,60,10,0.5)', burnCore:'rgba(255,200,80,0.95)',
+  boomFill:'rgba(220,120,30,0.28)', boomStroke:'#c85a10',
+  light:'#7a3fd0', lightGlow:'#7a3fd0'
+};
+let CT = CT_DARK;
+
+/* =========================================================
+   ТИПЫ БАШЕН
+   ========================================================= */
+const TOWER_TYPES = {
+  arrow: {
+    icon:'🏹', color:'#4aa3df', cost:50, range:118, damage:10, rate:0.50, projSpeed:520,
+    nameKey:'towerArrowName', descKey:'towerArrowDesc'
+  },
+  cannon: {
+    icon:'💣', color:'#e0923c', cost:110, range:112, damage:30, rate:1.35, projSpeed:320, splash:52,
+    nameKey:'towerCannonName', descKey:'towerCannonDesc'
+  },
+  frost: {
+    icon:'❄', color:'#63d6e8', cost:80, range:100, damage:6, rate:0.85, projSpeed:380,
+    slow:0.45, slowDur:2.0,
+    nameKey:'towerFrostName', descKey:'towerFrostDesc'
+  },
+  tesla: {
+    icon:'⚡', color:'#b06ee8', cost:160, range:136, damage:38, rate:1.5, chain:3,
+    nameKey:'towerTeslaName', descKey:'towerTeslaDesc'
+  },
+  fire: {
+    icon:'🔥', color:'#ff6b35', cost:100, range:108, damage:6, rate:0.9, projSpeed:400,
+    burnDps:14, burnDur:3.5,
+    nameKey:'towerFireName', descKey:'towerFireDesc'
+  }
+};
+
+/* =========================================================
+   ТИПЫ ВРАГОВ
+   ========================================================= */
+const ENEMY_TYPES = {
+  goblin: { hp:45,   speed:58,  reward:7,   radius:12, color:'#7dd35a', leak:1 },
+  wolf:   { hp:55,   speed:108, reward:9,   radius:11, color:'#b8c0c8', leak:1 },
+  orc:    { hp:125,  speed:46,  reward:14,  radius:14, color:'#d08a3a', leak:1 },
+  troll:  { hp:340,  speed:34,  reward:28,  radius:17, color:'#a05ad0', leak:1 },
+  boss:   { hp:1400, speed:30,  reward:120, radius:23, color:'#e05252', leak:5 }
+};
+
+/* =========================================================
+   КАРТА (переменные)
+   ========================================================= */
+let path = [];
+let cum = [];
+let blockedCells = new Set();
+
+function loadMap(key) {
+  const wp = MAPS[key];
+  path = wp.map(([c, r]) => ({ x: c * CELL + CELL / 2, y: r * CELL + CELL / 2 }));
+  cum = [0];
+  for (let i = 0; i < path.length - 1; i++) {
+    cum.push(cum[i] + Math.hypot(path[i+1].x - path[i].x, path[i+1].y - path[i].y));
+  }
+  blockedCells = new Set();
+  for (let i = 0; i < wp.length - 1; i++) {
+    let [c1, r1] = wp[i], [c2, r2] = wp[i+1];
+    const dc = Math.sign(c2 - c1), dr = Math.sign(r2 - r1);
+    let c = c1, r = r1;
+    blockedCells.add(c + ',' + r);
+    while (c !== c2 || r !== r2) { c += dc; r += dr; blockedCells.add(c + ',' + r); }
+  }
+}
+
+/* =========================================================
+   СОСТОЯНИЕ
+   ========================================================= */
+let state, uiCache = '', towerId = 0;
+
+function newState() {
+  const d = DIFF();
+  return {
+    money: d.startMoney, lives: 20, wave: 0, score: 0,
+    speed: 1, paused: false, gameOver: false, victory: false,
+    infoOpen: false, wasPaused: false,
+    time: 0,
+    enemies: [], towers: [], projectiles: [], effects: [],
+    spawnQueue: [], waveActive: false, waveTimer: 0,
+    selectedType: null, selectedTower: null,
+    hover: { x: -99, y: -99, col: -1, row: -1 }
+  };
+}
+
+/* =========================================================
+   ГЕНЕРАЦИЯ ВОЛН
+   ========================================================= */
+function makeWave(n) {
+  const list = [];
+  const add = (type, count, gap, offset = 0) => {
+    for (let i = 0; i < count; i++) list.push({ type, t: offset + i * gap });
+  };
+  add('goblin', 4 + Math.floor(n * 1.6), Math.max(0.22, 0.70 - n * 0.02));
+  if (n >= 3) add('wolf',  Math.floor((n - 1) * 0.9), 0.45, 1.5);
+  if (n >= 4) add('orc',   Math.floor((n - 2) * 0.8), 0.85, 3.0);
+  if (n >= 8) add('troll', Math.floor((n - 6) * 0.6), 1.40, 5.0);
+  if (n >= 5 && n % 5 === 0) add('boss', Math.floor(n / 5), 3.0, 8.0);
+  list.sort((a, b) => a.t - b.t);
+  return list;
+}
+
+function spawnEnemy(type, hpMul) {
+  const def = ENEMY_TYPES[type];
+  const hp = Math.round(def.hp * hpMul);
+  state.enemies.push({
+    type, x: path[0].x, y: path[0].y, seg: 0,
+    hp, maxHp: hp, speed: def.speed,
+    reward: def.reward + Math.floor(state.wave * 0.6),
+    radius: def.radius, color: def.color, leak: def.leak,
+    slowT: 0, slowMul: 1, progress: 0,
+    burnT: 0, burnDps: 0,
+    dead: false, leaked: false
+  });
+}
+
+function startWave() {
+  if (state.waveActive || state.gameOver) return;
+  if (state.wave >= DIFF().maxWaves) return;
+  state.wave++;
+  const hpMul = 1 + (state.wave - 1) * 0.20;
+  state.spawnQueue = makeWave(state.wave).map(s => ({ type: s.type, t: s.t, mul: hpMul }));
+  state.waveTimer = 0;
+  state.waveActive = true;
+  state.selectedType = null;
+  updateUI(true);
+}
+
+/* =========================================================
+   БАШНИ: ХАРАКТЕРИСТИКИ
+   ========================================================= */
+function towerStats(t) {
+  const d = TOWER_TYPES[t.type];
+  const k = t.level - 1;
+  return {
+    damage:    d.damage * (1 + 0.25 * k),
+    range:     d.range  * (1 + 0.03 * k),
+    rate:      Math.max(0.08, d.rate / (1 + 0.10 * k)),
+    projSpeed: d.projSpeed || 0,
+    splash:    d.splash ? d.splash * (1 + 0.04 * k) : 0,
+    chain:     d.chain ? d.chain + Math.floor(k / 3) : 0,
+    slow:      d.slow || 0,
+    slowDur:   d.slowDur ? d.slowDur * (1 + 0.05 * k) : 0,
+    burnDps:   d.burnDps ? d.burnDps * (1 + 0.25 * k) : 0,
+    burnDur:   d.burnDur ? d.burnDur * (1 + 0.04 * k) : 0
+  };
+}
+function upgradeCost(t) {
+  return Math.round(TOWER_TYPES[t.type].cost * (0.8 + 0.3 * t.level));
+}
+function sellValue(t) { return Math.floor(t.invested * 0.6); }
+
+function canBuild(col, row) {
+  if (col < 0 || row < 0 || col >= COLS || row >= ROWS) return false;
+  if (state.towers.length >= DIFF().maxTowers) return false;
+  if (blockedCells.has(col + ',' + row)) return false;
+  if (state.towers.some(t => t.col === col && t.row === row)) return false;
+  return true;
+}
+
+function buildTower(col, row) {
+  const type = state.selectedType;
+  if (!type) return;
+  const def = TOWER_TYPES[type];
+  if (!canBuild(col, row) || state.money < def.cost) return;
+  state.money -= def.cost;
+  state.towers.push({
+    id: ++towerId, type, col, row,
+    x: col * CELL + CELL / 2, y: row * CELL + CELL / 2,
+    level: 1, cd: 0, angle: -Math.PI / 2, invested: def.cost
+  });
+  updateUI(true);
+}
+
+function upgradeTower() {
+  const t = state.selectedTower;
+  if (!t || t.level >= DIFF().maxUpgrade) return;
+  const cost = upgradeCost(t);
+  if (state.money < cost) return;
+  state.money -= cost;
+  t.invested += cost;
+  t.level++;
+  updateUI(true);
+}
+
+function sellTower() {
+  const t = state.selectedTower;
+  if (!t) return;
+  state.money += sellValue(t);
+  state.towers = state.towers.filter(x => x !== t);
+  state.selectedTower = null;
+  updateUI(true);
+}
+
+/* =========================================================
+   УРОН И ЭФФЕКТЫ
+   ========================================================= */
+function damageEnemy(e, dmg) {
+  if (e.dead) return;
+  e.hp -= dmg;
+  if (e.hp <= 0) {
+    e.hp = 0; e.dead = true;
+    state.money += e.reward;
+    state.score += e.reward;
+    state.effects.push({ type:'death', x:e.x, y:e.y, r:e.radius, life:0.35, max:0.35, color:e.color });
+  }
+}
+function applySlow(e, mul, dur) {
+  if (e.dead) return;
+  e.slowMul = Math.min(e.slowMul || 1, mul);
+  e.slowT = Math.max(e.slowT, dur);
+}
+function applyBurn(e, dps, dur) {
+  if (e.dead) return;
+  e.burnDps = Math.max(e.burnDps || 0, dps);
+  e.burnT = Math.max(e.burnT || 0, dur);
+}
+
+/* =========================================================
+   СТРЕЛЬБА
+   ========================================================= */
+function fire(tower, target, st) {
+  const def = TOWER_TYPES[tower.type];
+  const ang = Math.atan2(target.y - tower.y, target.x - tower.x);
+
+  if (def.chain) { fireTesla(tower, target, st, def); return; }
+
+  state.projectiles.push({
+    x: tower.x + Math.cos(ang) * 14,
+    y: tower.y + Math.sin(ang) * 14,
+    target, tx: target.x, ty: target.y,
+    speed: st.projSpeed, damage: st.damage,
+    splash: st.splash, slow: st.slow, slowDur: st.slowDur,
+    burnDps: st.burnDps, burnDur: st.burnDur,
+    color: def.color, kind: tower.type, angle: ang, dead: false
+  });
+}
+
+function fireTesla(tower, target, st, def) {
+  const hitList = [target];
+  const used = new Set([target]);
+  let current = target;
+  for (let i = 1; i < st.chain; i++) {
+    let best = null, bestD = Infinity;
+    for (const e of state.enemies) {
+      if (e.dead || used.has(e)) continue;
+      const d = Math.hypot(e.x - current.x, e.y - current.y);
+      if (d < 100 && d < bestD) { bestD = d; best = e; }
+    }
+    if (!best) break;
+    used.add(best); hitList.push(best); current = best;
+  }
+  const pts = [{ x: tower.x, y: tower.y }, ...hitList.map(e => ({ x: e.x, y: e.y }))];
+  state.effects.push({ type:'lightning', pts, life:0.18, max:0.18 });
+  hitList.forEach((e, i) => damageEnemy(e, st.damage * Math.pow(0.8, i)));
+}
+
+/* =========================================================
+   ОБНОВЛЕНИЕ
+   ========================================================= */
+function update(dt) {
+  if (state.gameOver) return;
+  state.time += dt;
+
+  // спавн
+  if (state.waveActive) {
+    state.waveTimer += dt;
+    while (state.spawnQueue.length && state.spawnQueue[0].t <= state.waveTimer) {
+      const s = state.spawnQueue.shift();
+      spawnEnemy(s.type, s.mul);
+    }
+  }
+
+  // движение врагов
+  for (const e of state.enemies) {
+    if (e.dead) continue;
+
+    // горение
+    if (e.burnT > 0) {
+      damageEnemy(e, e.burnDps * dt);
+      e.burnT -= dt;
+      if (e.dead) continue;
+    }
+
+    if (e.slowT > 0) e.slowT -= dt;
+    const mul = e.slowT > 0 ? e.slowMul : 1;
+    let move = e.speed * mul * dt;
+
+    while (move > 0 && e.seg < path.length - 1) {
+      const tp = path[e.seg + 1];
+      const dx = tp.x - e.x, dy = tp.y - e.y;
+      const d = Math.hypot(dx, dy);
+      if (d <= move) { e.x = tp.x; e.y = tp.y; move -= d; e.seg++; }
+      else { e.x += dx / d * move; e.y += dy / d * move; move = 0; }
+    }
+    const p0 = path[e.seg];
+    e.progress = cum[e.seg] + Math.hypot(e.x - p0.x, e.y - p0.y);
+    if (e.seg >= path.length - 1) { e.dead = true; e.leaked = true; }
+  }
+
+  // прорыв
+  let lost = 0;
+  for (const e of state.enemies) if (e.leaked) lost += e.leak;
+  if (lost > 0) {
+    state.lives = Math.max(0, state.lives - lost);
+    state.effects.push({
+      type:'boom', x:path[path.length-1].x, y:path[path.length-1].y,
+      r:60, life:0.5, max:0.5, color:'#e05252'
+    });
+    if (state.lives <= 0) { gameOver(false); }
+  }
+  state.enemies = state.enemies.filter(e => !e.dead);
+
+  // башни
+  for (const t of state.towers) {
+    t.cd = Math.max(0, t.cd - dt);
+    const st = towerStats(t);
+    let target = null, bestProg = -1;
+    for (const e of state.enemies) {
+      if (e.dead) continue;
+      const d = Math.hypot(e.x - t.x, e.y - t.y);
+      if (d <= st.range && e.progress > bestProg) { bestProg = e.progress; target = e; }
+    }
+    if (target) {
+      t.angle = Math.atan2(target.y - t.y, target.x - t.x);
+      if (t.cd <= 0) { t.cd = st.rate; fire(t, target, st); }
+    }
+  }
+
+  // снаряды
+  for (const p of state.projectiles) {
+    if (p.target && p.target.dead) p.target = null;
+    const tx = p.target ? p.target.x : p.tx;
+    const ty = p.target ? p.target.y : p.ty;
+    p.tx = tx; p.ty = ty;
+    const dx = tx - p.x, dy = ty - p.y;
+    const d = Math.hypot(dx, dy);
+    const step = p.speed * dt;
+    if (d <= step || d < 0.001) { p.x = tx; p.y = ty; projectileHit(p); p.dead = true; }
+    else { p.x += dx / d * step; p.y += dy / d * step; p.angle = Math.atan2(dy, dx); }
+  }
+  state.projectiles = state.projectiles.filter(p => !p.dead);
+
+  // эффекты
+  for (const fx of state.effects) fx.life -= dt;
+  state.effects = state.effects.filter(fx => fx.life > 0);
+
+  // конец волны
+  if (state.waveActive && state.spawnQueue.length === 0 && state.enemies.length === 0) {
+    state.waveActive = false;
+    const bonus = 20 + state.wave * 8;
+    state.money += bonus;
+    state.score += bonus;
+    // победа?
+    if (isFinite(DIFF().maxWaves) && state.wave >= DIFF().maxWaves) {
+      gameOver(true);
+    }
+    updateUI(true);
+  }
+}
+
+function projectileHit(p) {
+  if (p.splash) {
+    state.effects.push({ type:'boom', x:p.x, y:p.y, r:p.splash, life:0.28, max:0.28 });
+    for (const e of state.enemies) {
+      if (e.dead) continue;
+      const d = Math.hypot(e.x - p.x, e.y - p.y);
+      if (d <= p.splash) {
+        const falloff = 1 - 0.45 * (d / p.splash);
+        damageEnemy(e, p.damage * falloff);
+        if (p.burnDps) applyBurn(e, p.burnDps, p.burnDur);
+      }
+    }
+    return;
+  }
+  if (p.target && !p.target.dead) {
+    damageEnemy(p.target, p.damage);
+    if (p.slow) applySlow(p.target, p.slow, p.slowDur);
+    if (p.burnDps) applyBurn(p.target, p.burnDps, p.burnDur);
+    return;
+  }
+  let best = null, bestD = 26;
+  for (const e of state.enemies) {
+    if (e.dead) continue;
+    const d = Math.hypot(e.x - p.x, e.y - p.y);
+    if (d < bestD) { bestD = d; best = e; }
+  }
+  if (best) {
+    damageEnemy(best, p.damage);
+    if (p.slow) applySlow(best, p.slow, p.slowDur);
+    if (p.burnDps) applyBurn(best, p.burnDps, p.burnDur);
+  }
+}
+
+function gameOver(victory) {
+  if (state.gameOver) return;
+  state.gameOver = true;
+  state.victory = !!victory;
+  document.getElementById('finalWave').textContent = state.wave;
+  document.getElementById('finalScore').textContent = state.score;
+  overlayTitle.textContent = victory ? t('victoryTitle') : t('gameOverTitle');
+  overlayTitle.className = victory ? 'win' : 'lose';
+  document.getElementById('overlayWaveLabel').textContent = t('wavesSurvived');
+  document.getElementById('overlayScoreLabel').textContent = t('finalScore');
+  document.getElementById('restartBtn').textContent = t('playAgain');
+  overlay.classList.remove('hidden');
+  updateUI(true);
+}
+
+/* =========================================================
+   ОТРИСОВКА
+   ========================================================= */
+function drawPath() {
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const trace = () => {
+    ctx.beginPath();
+    ctx.moveTo(path[0].x, path[0].y);
+    for (let i = 1; i < path.length; i++) ctx.lineTo(path[i].x, path[i].y);
+  };
+  trace(); ctx.strokeStyle = CT.pathOuter; ctx.lineWidth = CELL - 3; ctx.stroke();
+  trace(); ctx.strokeStyle = CT.pathInner; ctx.lineWidth = CELL - 11; ctx.stroke();
+  trace(); ctx.setLineDash([6, 12]);
+  ctx.strokeStyle = CT.pathDash; ctx.lineWidth = 3; ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function drawMarkers() {
+  const sy = path[0].y;
+  const g = ctx.createRadialGradient(0, sy, 0, 0, sy, 34);
+  g.addColorStop(0, CT.portal); g.addColorStop(1, CT.portalGlow);
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(0, sy, 34, 0, Math.PI * 2); ctx.fill();
+
+  const end = path[path.length - 1];
+  const pulse = 1 + Math.sin(state.time * 3) * 0.06;
+  ctx.save();
+  ctx.translate(end.x, end.y);
+  ctx.scale(pulse, pulse);
+  ctx.beginPath(); ctx.arc(0, 0, 20, 0, Math.PI * 2);
+  ctx.fillStyle = CT.baseGlow; ctx.fill();
+  ctx.strokeStyle = CT.baseStroke; ctx.lineWidth = 2; ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(0, -13); ctx.lineTo(11, 0); ctx.lineTo(0, 13); ctx.lineTo(-11, 0);
+  ctx.closePath();
+  const bg = ctx.createLinearGradient(0, -13, 0, 13);
+  bg.addColorStop(0, CT.baseFill1); bg.addColorStop(1, CT.baseFill2);
+  ctx.fillStyle = bg; ctx.fill();
+  ctx.strokeStyle = CT.baseStroke2; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.restore();
+}
+
+function drawTower(t) {
+  const def = TOWER_TYPES[t.type];
+  ctx.beginPath(); ctx.arc(t.x, t.y, 16, 0, Math.PI * 2);
+  ctx.fillStyle = CT.plat; ctx.fill();
+  ctx.strokeStyle = CT.platStroke; ctx.lineWidth = 2; ctx.stroke();
+
+  ctx.save(); ctx.translate(t.x, t.y); ctx.rotate(t.angle);
+  ctx.fillStyle = def.color;
+  if (t.type === 'cannon') {
+    ctx.fillRect(0, -6, 20, 12);
+    ctx.beginPath(); ctx.arc(20, 0, 6, 0, Math.PI * 2); ctx.fill();
+  } else if (t.type === 'tesla') {
+    ctx.fillRect(0, -3, 12, 6);
+    ctx.beginPath(); ctx.arc(14, 0, 7, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(200,150,255,0.85)'; ctx.fill();
+  } else if (t.type === 'fire') {
+    ctx.fillRect(0, -5, 16, 10);
+    ctx.beginPath();
+    ctx.moveTo(16, -7); ctx.lineTo(24, 0); ctx.lineTo(16, 7);
+    ctx.closePath(); ctx.fill();
+  } else {
+    ctx.fillRect(0, -4, 18, 8);
+    ctx.beginPath();
+    ctx.moveTo(18, -6); ctx.lineTo(24, 0); ctx.lineTo(18, 6);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+
+  ctx.beginPath(); ctx.arc(t.x, t.y, 9, 0, Math.PI * 2);
+  ctx.fillStyle = def.color; ctx.fill();
+  ctx.beginPath(); ctx.arc(t.x - 2.5, t.y - 2.5, 3.2, 0, Math.PI * 2);
+  ctx.fillStyle = CT.core; ctx.fill();
+
+  // уровень
+  ctx.font = 'bold 10px sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = CT.lvlText;
+  ctx.strokeStyle = CT.plat; ctx.lineWidth = 3;
+  ctx.strokeText(t.level, t.x, t.y + 26);
+  ctx.fillText(t.level, t.x, t.y + 26);
+}
+
+function drawEnemy(e) {
+  ctx.beginPath();
+  ctx.ellipse(e.x, e.y + e.radius * 0.75, e.radius * 0.9, e.radius * 0.38, 0, 0, Math.PI * 2);
+  ctx.fillStyle = CT.shadow; ctx.fill();
+
+  ctx.beginPath(); ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
+  ctx.fillStyle = e.color; ctx.fill();
+  ctx.strokeStyle = CT.eStroke; ctx.lineWidth = 2; ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(e.x - e.radius * 0.3, e.y - e.radius * 0.35, e.radius * 0.3, 0, Math.PI * 2);
+  ctx.fillStyle = CT.eHi; ctx.fill();
+
+  // заморозка
+  if (e.slowT > 0) {
+    ctx.beginPath(); ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
+    ctx.fillStyle = CT.freezeFill; ctx.fill();
+    ctx.strokeStyle = CT.freezeStroke; ctx.lineWidth = 2; ctx.stroke();
+  }
+
+  // огонь
+  if (e.burnT > 0) {
+    const tt = state.time * 12;
+    for (let i = 0; i < 3; i++) {
+      const ang = tt + i * 2.1;
+      const fx = e.x + Math.cos(ang) * e.radius * 0.55;
+      const fy = e.y - e.radius * 0.55 + Math.sin(ang) * 3;
+      const rr = 3 + Math.sin(tt * 1.7 + i) * 1.2;
+      ctx.beginPath(); ctx.arc(fx, fy, rr, 0, Math.PI * 2);
+      ctx.fillStyle = i === 1 ? CT.burnCore : CT.fire1;
+      ctx.fill();
+    }
+    ctx.beginPath(); ctx.arc(e.x, e.y, e.radius + 2, 0, Math.PI * 2);
+    ctx.fillStyle = CT.fire2; ctx.fill();
+  }
+
+  // hp
+  const bw = e.radius * 2.3, bh = 4;
+  const bx = e.x - bw / 2, by = e.y - e.radius - 11;
+  const hp = Math.max(0, e.hp / e.maxHp);
+  ctx.fillStyle = CT.hpBg; ctx.fillRect(bx - 1, by - 1, bw + 2, bh + 2);
+  ctx.fillStyle = hp > 0.5 ? '#5fd35f' : hp > 0.25 ? '#e0c040' : '#e05252';
+  ctx.fillRect(bx, by, bw * hp, bh);
+}
+
+function drawProjectiles() {
+  for (const p of state.projectiles) {
+    ctx.save();
+    ctx.shadowColor = p.color; ctx.shadowBlur = 10;
+    if (p.kind === 'cannon') {
+      ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+      ctx.fillStyle = '#3a2a1a'; ctx.fill();
+      ctx.strokeStyle = p.color; ctx.lineWidth = 2; ctx.stroke();
+    } else if (p.kind === 'frost') {
+      ctx.translate(p.x, p.y); ctx.rotate(state.time * 6);
+      ctx.strokeStyle = p.color; ctx.lineWidth = 2.5;
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath(); ctx.moveTo(-6, 0); ctx.lineTo(6, 0); ctx.stroke();
+        ctx.rotate(Math.PI / 3);
+      }
+    } else if (p.kind === 'fire') {
+      ctx.translate(p.x, p.y); ctx.rotate(p.angle || 0);
+      ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI * 2);
+      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 6);
+      g.addColorStop(0, '#ffe08a'); g.addColorStop(1, p.color);
+      ctx.fillStyle = g; ctx.fill();
+    } else {
+      ctx.translate(p.x, p.y); ctx.rotate(p.angle || 0);
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.moveTo(7, 0); ctx.lineTo(-4, -3.5); ctx.lineTo(-4, 3.5);
+      ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
+function drawEffects() {
+  for (const fx of state.effects) {
+    const k = Math.max(0, fx.life / fx.max);
+    const prog = 1 - k;
+    if (fx.type === 'boom') {
+      ctx.globalAlpha = k;
+      ctx.beginPath();
+      ctx.arc(fx.x, fx.y, fx.r * (0.45 + 0.55 * prog), 0, Math.PI * 2);
+      ctx.fillStyle = CT.boomFill; ctx.fill();
+      ctx.strokeStyle = CT.boomStroke;
+      ctx.lineWidth = 3 * k + 1; ctx.stroke();
+      ctx.globalAlpha = 1;
+    } else if (fx.type === 'death') {
+      ctx.globalAlpha = k;
+      ctx.beginPath();
+      ctx.arc(fx.x, fx.y, fx.r + prog * 14, 0, Math.PI * 2);
+      ctx.strokeStyle = fx.color; ctx.lineWidth = 3 * k; ctx.stroke();
+      ctx.globalAlpha = 1;
+    } else if (fx.type === 'lightning') {
+      ctx.globalAlpha = k;
+      ctx.strokeStyle = CT.light; ctx.lineWidth = 3;
+      ctx.shadowColor = CT.lightGlow; ctx.shadowBlur = 14;
+      ctx.beginPath();
+      for (let i = 0; i < fx.pts.length - 1; i++) {
+        const a = fx.pts[i], b = fx.pts[i + 1];
+        ctx.moveTo(a.x, a.y);
+        const segs = 4;
+        for (let s = 1; s <= segs; s++) {
+          const tt = s / segs;
+          const jx = (Math.random() - 0.5) * 9;
+          const jy = (Math.random() - 0.5) * 9;
+          ctx.lineTo(a.x + (b.x - a.x) * tt + jx, a.y + (b.y - a.y) * tt + jy);
+        }
+      }
+      ctx.stroke();
+      ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+    }
+  }
+}
+
+function drawPlacementPreview() {
+  if (!state.selectedType) return;
+  const { col, row } = state.hover;
+  if (col < 0 || row < 0 || col >= COLS || row >= ROWS) return;
+  const def = TOWER_TYPES[state.selectedType];
+  const x = col * CELL + CELL / 2;
+  const y = row * CELL + CELL / 2;
+  const ok = canBuild(col, row) && state.money >= def.cost;
+
+  ctx.beginPath(); ctx.arc(x, y, def.range, 0, Math.PI * 2);
+  ctx.fillStyle = ok ? CT.validFill : CT.badFill; ctx.fill();
+  ctx.strokeStyle = ok ? CT.validStroke : CT.badStroke;
+  ctx.lineWidth = 2; ctx.setLineDash([7, 7]); ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.globalAlpha = 0.75;
+  ctx.beginPath(); ctx.arc(x, y, 12, 0, Math.PI * 2);
+  ctx.fillStyle = ok ? def.color : '#e05252'; ctx.fill();
+  ctx.globalAlpha = 1;
+}
+
+function drawSelectedRange() {
+  const t = state.selectedTower;
+  if (!t) return;
+  const st = towerStats(t);
+  ctx.beginPath(); ctx.arc(t.x, t.y, st.range, 0, Math.PI * 2);
+  ctx.fillStyle = CT.selFill; ctx.fill();
+  ctx.strokeStyle = CT.selStroke; ctx.lineWidth = 2;
+  ctx.setLineDash([5, 6]); ctx.stroke(); ctx.setLineDash([]);
+  ctx.beginPath(); ctx.arc(t.x, t.y, 18, 0, Math.PI * 2);
+  ctx.strokeStyle = CT.selOutline; ctx.lineWidth = 2; ctx.stroke();
+}
+
+function draw() {
+  ctx.fillStyle = CT.bg; ctx.fillRect(0, 0, W, H);
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++)
+      if ((r + c) % 2 === 0) { ctx.fillStyle = CT.cellAlt; ctx.fillRect(c*CELL, r*CELL, CELL, CELL); }
+  ctx.strokeStyle = CT.grid; ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let c = 1; c < COLS; c++) { ctx.moveTo(c*CELL, 0); ctx.lineTo(c*CELL, H); }
+  for (let r = 1; r < ROWS; r++) { ctx.moveTo(0, r*CELL); ctx.lineTo(W, r*CELL); }
+  ctx.stroke();
+
+  drawPath();
+  drawMarkers();
+  drawPlacementPreview();
+  drawSelectedRange();
+  for (const t of state.towers) drawTower(t);
+  for (const e of state.enemies) drawEnemy(e);
+  drawProjectiles();
+  drawEffects();
+  updateUI();
+}
+
+/* =========================================================
+   UI
+   ========================================================= */
+function buildShop() {
+  shopEl.innerHTML = '';
+  for (const [key, def] of Object.entries(TOWER_TYPES)) {
+    const btn = document.createElement('button');
+    btn.className = 'tower-btn';
+    btn.dataset.type = key;
+    btn.style.borderLeftColor = def.color;
+    btn.innerHTML =
+      `<span class="tname">${def.icon} ${t(def.nameKey)}</span>` +
+      `<span class="tcost">${def.cost} 💰</span>` +
+      `<span class="tdesc">${t(def.descKey)}</span>`;
+    btn.addEventListener('click', () => {
+      state.selectedTower = null;
+      state.selectedType = state.selectedType === key ? null : key;
+      updateUI(true);
+    });
+    shopEl.appendChild(btn);
+  }
+  const waveBtn = document.createElement('button');
+  waveBtn.id = 'startWaveBtn';
+  waveBtn.className = 'btn wave';
+  waveBtn.addEventListener('click', startWave);
+  shopEl.appendChild(waveBtn);
+}
+
+function rebuildShopLabels() {
+  shopEl.querySelectorAll('.tower-btn').forEach(btn => {
+    const def = TOWER_TYPES[btn.dataset.type];
+    btn.querySelector('.tname').textContent = def.icon + ' ' + t(def.nameKey);
+    btn.querySelector('.tdesc').textContent = t(def.descKey);
+  });
+  updateUI(true);
+}
+
+function updateUI(force) {
+  const sel = state.selectedTower;
+  const key = [
+    state.money, state.lives, state.wave, state.score,
+    state.waveActive, state.gameOver, state.selectedType,
+    sel ? sel.id : 0, sel ? sel.level : 0,
+    state.towers.length, settings.lang, settings.difficulty
+  ].join('|');
+  if (!force && key === uiCache) return;
+  uiCache = key;
+
+  moneyEl.textContent = state.money;
+  livesEl.textContent = state.lives;
+  waveEl.textContent = state.wave;
+  scoreEl.textContent = state.score;
+
+  const d = DIFF();
+  if (isFinite(d.maxTowers)) {
+    towerCountStat.style.display = '';
+    towerCountEl.textContent = state.towers.length + '/' + d.maxTowers;
+  } else {
+    towerCountStat.style.display = 'none';
+  }
+
+  document.querySelectorAll('.tower-btn').forEach(btn => {
+    const type = btn.dataset.type;
+    const cost = TOWER_TYPES[type].cost;
+    btn.classList.toggle('selected', state.selectedType === type);
+    btn.classList.toggle('disabled', state.money < cost);
+  });
+
+  const waveBtn = document.getElementById('startWaveBtn');
+  if (waveBtn) {
+    const finished = isFinite(d.maxWaves) && state.wave >= d.maxWaves;
+    waveBtn.disabled = state.waveActive || state.gameOver || finished;
+    waveBtn.textContent = state.waveActive
+      ? t('waveInProgress', { n: state.wave })
+      : t('startWave', { n: state.wave + 1 });
+  }
+
+  if (sel) {
+    const def = TOWER_TYPES[sel.type];
+    const st = towerStats(sel);
+    const maxLvl = d.maxUpgrade;
+    const maxed = sel.level >= maxLvl;
+    const cost = upgradeCost(sel);
+    const stats =
+      `${t('damage')}: <b>${st.damage.toFixed(1)}</b><br>` +
+      `${t('range')}: <b>${st.range.toFixed(0)}</b><br>` +
+      `${t('speed')}: <b>${(1 / st.rate).toFixed(2)}/s</b>` +
+      (st.splash ? `<br>${t('splash')}: <b>${st.splash.toFixed(0)}</b>` : '') +
+      (st.chain ? `<br>${t('chain')}: <b>${st.chain}</b>` : '') +
+      (st.slow ? `<br>${t('slow')}: <b>${Math.round((1 - st.slow) * 100)}%</b>` : '') +
+      (st.burnDps ? `<br>${t('burn')}: <b>${st.burnDps.toFixed(1)} ${t('dps')}</b>` : '');
+
+    panel.innerHTML =
+      `<div class="tp-title"><span>${def.icon} ${t(def.nameKey)}</span>` +
+      `<span class="tp-lvl">${t('levelShort')} ${sel.level}/${maxLvl}</span></div>` +
+      `<div class="tp-stats">${stats}</div>` +
+      `<div class="tp-btns">` +
+        `<button class="btn" id="upgradeBtn" ${maxed || state.money < cost ? 'disabled' : ''}>` +
+          (maxed ? t('max') : `⬆ ${cost} 💰`) +
+        `</button>` +
+        `<button class="btn" id="sellBtn">💵 ${sellValue(sel)}</button>` +
+      `</div>`;
+    panel.classList.add('show');
+  } else {
+    panel.classList.remove('show');
+    panel.innerHTML = '';
+  }
+}
+
+panel.addEventListener('click', e => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  if (btn.id === 'upgradeBtn') upgradeTower();
+  else if (btn.id === 'sellBtn') sellTower();
+});
+
+/* =========================================================
+   INFO MODAL
+   ========================================================= */
+function renderInfo() {
+  const ru = settings.lang === 'ru';
+  document.getElementById('infoTitle').textContent = t('infoTitle');
+
+  let towerHtml = '';
+  for (const [key, def] of Object.entries(TOWER_TYPES)) {
+    towerHtml +=
+      `<div class="info-card">` +
+        `<div class="ic-title"><span>${def.icon} ${t(def.nameKey)}</span><span class="ic-cost">${def.cost} 💰</span></div>` +
+        `<div class="ic-desc">${t(def.descKey)}<br>` +
+          `${t('damage')}: ${def.damage} · ${t('range')}: ${def.range}` +
+          (def.splash ? ` · ${t('splash')}: ${def.splash}` : '') +
+          (def.chain ? ` · ${t('chain')}: ${def.chain}` : '') +
+          (def.slow ? ` · ${t('slow')}: ${Math.round((1 - def.slow) * 100)}%` : '') +
+          (def.burnDps ? ` · ${t('burn')}: ${def.burnDps} ${t('dps')}` : '') +
+        `</div>` +
+      `</div>`;
+  }
+
+  let diffHtml = '';
+  for (const key of ['easy', 'medium', 'hard', 'impossible']) {
+    const d = DIFFICULTIES[key];
+    const selected = settings.difficulty === key ? ' selected' : '';
+    diffHtml +=
+      `<label class="diff-option${selected}" data-diff="${key}">` +
+        `<input type="radio" name="difficulty" value="${key}" ${settings.difficulty === key ? 'checked' : ''}>` +
+        `<div><div class="dname">${t(key)}</div><div class="ddesc">${t(key + 'Desc')}</div></div>` +
+      `</label>`;
+  }
+
+  infoBody.innerHTML =
+    `<h3>${t('howToTitle')}</h3>` +
+    `<p>${t('howToText')}</p>` +
+    `<h3>${t('towersTitle')}</h3>` +
+    `<div class="info-grid">${towerHtml}</div>` +
+    `<h3>${t('difficultyTitle')}</h3>` +
+    `<p style="margin-bottom:10px">${t('difficultyNote')}</p>` +
+    `<div id="diffList">${diffHtml}</div>`;
+
+  infoBody.querySelectorAll('.diff-option').forEach(el => {
+    el.addEventListener('click', () => {
+      const key = el.dataset.diff;
+      if (key === settings.difficulty) return;
+      changeDifficulty(key);
+      renderInfo();
+    });
+  });
+}
+
+function changeDifficulty(key) {
+  settings.difficulty = key;
+  saveSettings();
+  loadMap(DIFF().mapKey);
+  restart();
+  updateUI(true);
+}
+
+function openInfo() {
+  if (state.infoOpen) return;
+  state.infoOpen = true;
+  state.wasPaused = state.paused;
+  state.paused = true;
+  updatePauseBtn();
+  renderInfo();
+  infoModal.classList.remove('hidden');
+}
+function closeInfo() {
+  state.infoOpen = false;
+  state.paused = state.wasPaused || false;
+  updatePauseBtn();
+  infoModal.classList.add('hidden');
+}
+document.getElementById('infoBtn').addEventListener('click', openInfo);
+document.getElementById('closeInfoBtn').addEventListener('click', closeInfo);
+infoModal.addEventListener('click', e => { if (e.target === infoModal) closeInfo(); });
+
+/* =========================================================
+   ТЕМА / ЯЗЫК
+   ========================================================= */
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', settings.theme);
+  CT = settings.theme === 'dark' ? CT_DARK : CT_LIGHT;
+  themeBtn.textContent = settings.theme === 'dark' ? '☀' : '🌙';
+}
+function applyLang() {
+  document.documentElement.lang = settings.lang;
+  langBtn.textContent = settings.lang === 'ru' ? 'EN' : 'RU';
+  pauseBtn.textContent = state && state.paused ? '▶' : '⏸';
+  rebuildShopLabels();
+  if (state && state.gameOver) {
+    overlayTitle.textContent = state.victory ? t('victoryTitle') : t('gameOverTitle');
+    document.getElementById('overlayWaveLabel').textContent = t('wavesSurvived');
+    document.getElementById('overlayScoreLabel').textContent = t('finalScore');
+    document.getElementById('restartBtn').textContent = t('playAgain');
+  }
+  if (state && state.infoOpen) renderInfo();
+  updateUI(true);
+}
+
+themeBtn.addEventListener('click', () => {
+  settings.theme = settings.theme === 'dark' ? 'light' : 'dark';
+  saveSettings(); applyTheme();
+});
+langBtn.addEventListener('click', () => {
+  settings.lang = settings.lang === 'ru' ? 'en' : 'ru';
+  saveSettings(); applyLang();
+});
+
+/* =========================================================
+   ВВОД
+   ========================================================= */
+function getMouse(ev) {
+  const r = canvas.getBoundingClientRect();
+  return {
+    x: (ev.clientX - r.left) * (canvas.width / r.width),
+    y: (ev.clientY - r.top) * (canvas.height / r.height)
+  };
+}
+canvas.addEventListener('mousemove', ev => {
+  const m = getMouse(ev);
+  state.hover.x = m.x; state.hover.y = m.y;
+  state.hover.col = Math.floor(m.x / CELL);
+  state.hover.row = Math.floor(m.y / CELL);
+});
+canvas.addEventListener('mouseleave', () => { state.hover.col = -1; state.hover.row = -1; });
+
+canvas.addEventListener('click', ev => {
+  if (state.gameOver) return;
+  const m = getMouse(ev);
+  const col = Math.floor(m.x / CELL);
+  const row = Math.floor(m.y / CELL);
+
+  if (state.selectedType) { buildTower(col, row); return; }
+  const hit = state.towers.find(t => t.col === col && t.row === row);
+  state.selectedTower = hit || null;
+  updateUI(true);
+});
+canvas.addEventListener('contextmenu', ev => {
+  ev.preventDefault();
+  state.selectedType = null;
+  state.selectedTower = null;
+  updateUI(true);
+});
+
+speedBtn.addEventListener('click', () => {
+  state.speed = state.speed === 1 ? 2 : state.speed === 2 ? 3 : 1;
+  speedBtn.textContent = '⏩ x' + state.speed;
+});
+function updatePauseBtn() {
+  pauseBtn.textContent = state.paused ? '▶' : '⏸';
+}
+pauseBtn.addEventListener('click', () => {
+  if (state.infoOpen) return;
+  state.paused = !state.paused;
+  updatePauseBtn();
+});
+
+document.getElementById('restartBtn').addEventListener('click', restart);
+
+window.addEventListener('keydown', ev => {
+  if (ev.key === 'Escape') {
+    if (state.infoOpen) { closeInfo(); return; }
+    state.selectedType = null; state.selectedTower = null;
+    updateUI(true);
+    return;
+  }
+  if (state.infoOpen) return;
+  const keys = { '1':'arrow', '2':'cannon', '3':'frost', '4':'tesla', '5':'fire' };
+  if (keys[ev.key]) {
+    state.selectedTower = null;
+    state.selectedType = state.selectedType === keys[ev.key] ? null : keys[ev.key];
+    updateUI(true);
+  } else if (ev.key === ' ') {
+    ev.preventDefault();
+    startWave();
+  }
+});
+
+/* =========================================================
+   СБРОС / СТАРТ
+   ========================================================= */
+function restart() {
+  state = newState();
+  uiCache = '';
+  overlay.classList.add('hidden');
+  pauseBtn.textContent = '⏸';
+  speedBtn.textContent = '⏩ x1';
+  updateUI(true);
+}
+
+/* =========================================================
+   ГЛАВНЫЙ ЦИКЛ
+   ========================================================= */
+let lastTs = 0;
+function loop(ts) {
+  if (!lastTs) lastTs = ts;
+  let dt = (ts - lastTs) / 1000;
+  lastTs = ts;
+  dt = Math.min(dt, 0.05);
+
+  if (!state.paused && !state.gameOver) {
+    for (let i = 0; i < state.speed; i++) update(dt);
+  } else {
+    state.time += dt * 0.2;
+  }
+  draw();
+  requestAnimationFrame(loop);
+}
+
+/* =========================================================
+   ИНИЦИАЛИЗАЦИЯ
+   ========================================================= */
+loadMap(DIFF().mapKey);
+state = newState();
+applyTheme();
+applyLang();
+buildShop();
+updateUI(true);
+requestAnimationFrame(loop);
+
+})();
+</script>
+</body>
+</html>
