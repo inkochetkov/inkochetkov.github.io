@@ -2,8 +2,12 @@
 <html lang="ru" data-theme="light">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Планировка комнаты</title>
+
+<!-- VK Bridge -->
+<script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
+
 <style>
   :root {
     --bg: #eef2f7;
@@ -128,6 +132,9 @@
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
     display: flex; background: var(--bg); color: var(--text); overflow: hidden;
+    touch-action: manipulation;
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
     transition: background .2s, color .2s;
   }
 
@@ -173,6 +180,8 @@
     width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--btn-border);
     background: var(--btn-bg); font-size: 13px; font-family: inherit; color: var(--text);
     cursor: pointer; margin-bottom: 8px; transition: background .15s, border-color .15s;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
   .btn:hover:not(:disabled) { background: var(--btn-hover); }
   .btn:active:not(:disabled) { transform: translateY(1px); }
@@ -206,7 +215,6 @@
   }
   canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
 
-  /* ---------- Управление масштабом ---------- */
   .zoom-controls {
     position: absolute; bottom: 16px; right: 16px; z-index: 30;
     display: flex; flex-direction: column; gap: 6px;
@@ -218,6 +226,8 @@
     box-shadow: 0 2px 10px var(--shadow);
     display: flex; align-items: center; justify-content: center;
     font-family: inherit; transition: background .15s;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
   .zoom-btn:hover { background: var(--btn-hover); }
   .zoom-btn:active { transform: scale(.95); }
@@ -232,7 +242,6 @@
     min-width: 52px; text-align: center;
   }
 
-  /* ---------- Мобильное меню ---------- */
   .menu-btn, .backdrop { display: none; }
   .menu-btn {
     align-items: center; justify-content: center;
@@ -241,6 +250,8 @@
     background: var(--panel-bg); border: 1px solid var(--border);
     color: var(--text); font-size: 22px; line-height: 1;
     cursor: pointer; box-shadow: 0 4px 14px var(--shadow);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
   .menu-btn:active { transform: scale(.96); }
 
@@ -256,10 +267,12 @@
       z-index: 100;
       box-shadow: 6px 0 32px rgba(0,0,0,.18);
       border-right: none;
+      padding-top: calc(14px + env(safe-area-inset-top, 0px));
+      padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px));
     }
     .panel.open { transform: translateX(0); }
 
-    .menu-btn { display: flex; }
+    .menu-btn { display: flex; top: calc(12px + env(safe-area-inset-top, 0px)); }
     .backdrop { display: none; position: fixed; inset: 0; background: var(--overlay); z-index: 90; }
     .backdrop.show { display: block; }
 
@@ -267,10 +280,9 @@
     .btn { padding: 11px 14px; font-size: 14px; }
     .panel h1 { font-size: 15px; }
 
-    /* На мобильных сверху — кнопка меню, снизу — зум */
-    .zoom-controls { bottom: 14px; right: 14px; }
+    .zoom-controls { bottom: calc(14px + env(safe-area-inset-bottom, 0px)); right: 14px; }
     .zoom-btn { width: 44px; height: 44px; }
-    .zoom-label { bottom: 14px; right: 66px; }
+    .zoom-label { bottom: calc(14px + env(safe-area-inset-bottom, 0px)); right: 66px; }
   }
 
   @media (max-width: 380px) {
@@ -386,6 +398,62 @@
 </main>
 
 <script>
+/* =========================================================
+   VK BRIDGE — init + storage + events
+   ========================================================= */
+const VK_AVAILABLE = (typeof vkBridge !== 'undefined');
+const VK_STORAGE_KEY = 'rp_settings_v1';
+
+function initVK(){
+  if(!VK_AVAILABLE) return;
+  try{
+    vkBridge.send('VKWebAppInit').catch(()=>{});
+  }catch(e){}
+}
+initVK();
+
+const storage = {
+  _cache: {},
+  async load(keys){
+    if(VK_AVAILABLE){
+      try{
+        const res = await vkBridge.send('VKWebAppStorageGet', { keys });
+        if(res && Array.isArray(res.keys)){
+          res.keys.forEach(item => {
+            if(item.value !== undefined && item.value !== ''){
+              this._cache[item.key] = item.value;
+            }
+          });
+        }
+      }catch(e){}
+    }
+    keys.forEach(k => {
+      if(this._cache[k] === undefined){
+        try{
+          const v = localStorage.getItem(k);
+          if(v !== null) this._cache[k] = v;
+        }catch(e){}
+      }
+    });
+  },
+  get(key, fallback){
+    if(key in this._cache) return this._cache[key];
+    try{
+      const v = localStorage.getItem(key);
+      return v === null ? fallback : v;
+    }catch(e){ return fallback; }
+  },
+  set(key, value){
+    this._cache[key] = String(value);
+    try{ localStorage.setItem(key, String(value)); }catch(e){}
+    if(VK_AVAILABLE){
+      try{
+        vkBridge.send('VKWebAppStorageSet', { key, value: String(value) }).catch(()=>{});
+      }catch(e){}
+    }
+  }
+};
+
 /* =========================================================
    i18n
    ========================================================= */
@@ -536,8 +604,13 @@ const i18n = {
   }
 };
 
-let LANG = localStorage.getItem('rp_lang') || 'ru';
-let THEME = localStorage.getItem('rp_theme') || 'light';
+/* VK: читаем дефолты синхронно (localStorage), потом VK Storage перезапишет */
+let LANG = 'ru';
+let THEME = 'light';
+try{
+  LANG = localStorage.getItem('rp_lang') || 'ru';
+  THEME = localStorage.getItem('rp_theme') || 'light';
+}catch(e){}
 const t = k => (i18n[LANG] && i18n[LANG][k]) || k;
 
 /* =========================================================
@@ -555,7 +628,6 @@ const state = {
   nextId: 1
 };
 
-/* Масштаб и панорамирование (пользовательские) */
 const MIN_ZOOM = 0.15;
 const MAX_ZOOM = 12;
 let userZoom = 1;
@@ -567,7 +639,6 @@ const $ = id => document.getElementById(id);
 let view = { s: 1, ox: 0, oy: 0 };
 let drag = null;
 
-/* Жесты */
 const pointers = new Map();
 let pinchState = null;
 let panState = null;
@@ -779,7 +850,7 @@ function roomBBox() {
 }
 
 /* =========================================================
-   Представление (fit / zoom / pan)
+   Вид (fit / zoom / pan)
    ========================================================= */
 function baseView(cw, ch, zoom) {
   const bbox = roomBBox();
@@ -916,7 +987,6 @@ function renderScene(c, cw, ch, useUserView = true) {
     c.closePath();
   };
 
-  /* пол */
   c.save();
   c.shadowColor = 'rgba(0,0,0,.16)';
   c.shadowBlur = 18;
@@ -926,7 +996,6 @@ function renderScene(c, cw, ch, useUserView = true) {
   c.fill();
   c.restore();
 
-  /* сетка */
   const step = pickGridStep(s);
   c.save();
   traceRoom();
@@ -941,7 +1010,6 @@ function renderScene(c, cw, ch, useUserView = true) {
   c.stroke();
   c.restore();
 
-  /* зоны открывания */
   const sectors = [];
   for (const d of state.doors) {
     const g = doorGeom(d);
@@ -961,7 +1029,6 @@ function renderScene(c, cw, ch, useUserView = true) {
     c.setLineDash([]);
   }
 
-  /* стены */
   const selDoor = state.selectedDoor != null
     ? state.doors.find(x => x.id === state.selectedDoor) : null;
 
@@ -1002,7 +1069,6 @@ function renderScene(c, cw, ch, useUserView = true) {
     }
   }
 
-  /* дверные полотна */
   for (const d of state.doors) {
     const g = doorGeom(d);
     if (!g) continue;
@@ -1039,7 +1105,6 @@ function renderScene(c, cw, ch, useUserView = true) {
     c.setLineDash([]);
   }
 
-  /* мебель */
   const outline = wallsToPolyline(state.walls, 32);
   for (let i = 0; i < state.items.length; i++) {
     const it = state.items[i];
@@ -1078,7 +1143,6 @@ function renderScene(c, cw, ch, useUserView = true) {
     }
   }
 
-  /* номера стен */
   c.fillStyle = COLORS.wallNumber;
   c.font = '600 11px -apple-system, Segoe UI, Roboto, Arial, sans-serif';
   c.textAlign = 'center';
@@ -1090,7 +1154,6 @@ function renderScene(c, cw, ch, useUserView = true) {
     c.fillText(String(i + 1), X(mx) + w.nrm.x * 16, Y(my) + w.nrm.y * 16);
   });
 
-  /* габариты */
   c.fillStyle = COLORS.dimension;
   c.font = '12px -apple-system, Segoe UI, Roboto, Arial, sans-serif';
   c.textAlign = 'center';
@@ -1166,7 +1229,6 @@ function setCursor() {
   else canvas.style.cursor = 'crosshair';
 }
 
-/* --- жесты --- */
 function startPinch() {
   const [p1, p2] = [...pointers.values()];
   pinchState = {
@@ -1182,7 +1244,6 @@ function startPinch() {
 canvas.addEventListener('pointerdown', e => {
   if (e.pointerType === 'mouse' && e.button !== 0 && e.button !== 1) return;
 
-  // координаты внутри canvas (для zoom-at)
   const r = canvas.getBoundingClientRect();
   const localX = e.clientX - r.left;
   const localY = e.clientY - r.top;
@@ -1196,7 +1257,6 @@ canvas.addEventListener('pointerdown', e => {
   }
   if (pointers.size > 2) return;
 
-  // средняя кнопка мыши — панорамирование
   if (e.pointerType === 'mouse' && e.button === 1) {
     panState = {
       pointerId: e.pointerId,
@@ -1222,7 +1282,6 @@ canvas.addEventListener('pointerdown', e => {
     }
     const dr = doorAt(p);
     if (dr) { deleteDoor(dr.id); return; }
-    // пустое — пан
     panState = {
       pointerId: e.pointerId,
       startX: e.clientX, startY: e.clientY,
@@ -1252,7 +1311,6 @@ canvas.addEventListener('pointerdown', e => {
     return;
   }
 
-  // пустое — потенциальный пан / сброс выделения
   panState = {
     pointerId: e.pointerId,
     startX: e.clientX, startY: e.clientY,
@@ -1271,7 +1329,6 @@ canvas.addEventListener('pointermove', e => {
   const localY = e.clientY - r.top;
   pointers.set(e.pointerId, { x: localX, y: localY });
 
-  /* --- pinch --- */
   if (pinchState && pointers.size === 2) {
     const [p1, p2] = [...pointers.values()];
     const dist = Math.max(1, Math.hypot(p1.x - p2.x, p1.y - p2.y));
@@ -1293,7 +1350,6 @@ canvas.addEventListener('pointermove', e => {
     return;
   }
 
-  /* --- перемещение мебели --- */
   if (drag && drag.pointerId === e.pointerId) {
     const it = state.items.find(i => i.id === drag.id);
     if (!it) return;
@@ -1305,7 +1361,6 @@ canvas.addEventListener('pointermove', e => {
     return;
   }
 
-  /* --- панорамирование --- */
   if (panState && panState.pointerId === e.pointerId) {
     const dx = e.clientX - panState.startX;
     const dy = e.clientY - panState.startY;
@@ -1341,13 +1396,11 @@ canvas.addEventListener('pointerup', endGesture);
 canvas.addEventListener('pointercancel', endGesture);
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 
-/* --- зум колесом --- */
 canvas.addEventListener('wheel', e => {
   e.preventDefault();
   const r = canvas.getBoundingClientRect();
   const px = e.clientX - r.left;
   const py = e.clientY - r.top;
-  // мягкий мультипликативный зум
   const factor = Math.exp(-e.deltaY * 0.0015);
   zoomAt(px, py, factor);
 }, { passive: false });
@@ -1649,12 +1702,10 @@ $('clearAll').onclick = () => {
   draw(); renderDoorList(); renderItemList();
 };
 
-/* --- кнопки зума в панели --- */
 $('zoomInBtn').onclick = () => zoomBy(1.25);
 $('zoomOutBtn').onclick = () => zoomBy(0.8);
 $('zoomResetBtn').onclick = () => resetView();
 
-/* --- кнопки зума поверх сцены --- */
 $('zoomInF').onclick = () => zoomBy(1.25);
 $('zoomOutF').onclick = () => zoomBy(0.8);
 $('zoomResetF').onclick = () => resetView();
@@ -1669,7 +1720,7 @@ $('printPdf').onclick = () => {
   const octx = oc.getContext('2d');
   octx.fillStyle = '#ffffff';
   octx.fillRect(0, 0, OW, OH);
-  renderScene(octx, OW, OH, false); // без пользовательского зума — вписываем весь план
+  renderScene(octx, OW, OH, false);
 
   const url = oc.toDataURL('image/png');
   const shapeName = (i18n[LANG].shapeRuPrint || {})[state.shape] || state.shape;
@@ -1719,7 +1770,8 @@ function applyLang() {
 }
 function setLang(lang) {
   LANG = lang;
-  localStorage.setItem('rp_lang', lang);
+  /* VK: сохраняем через абстракцию storage */
+  storage.set('rp_lang', lang);
   $('langSel').value = lang;
   applyLang();
   updateHingeLabels();
@@ -1731,7 +1783,7 @@ function setLang(lang) {
 function setTheme(th) {
   THEME = th;
   document.documentElement.setAttribute('data-theme', th);
-  localStorage.setItem('rp_theme', th);
+  storage.set('rp_theme', th);
   $('themeBtn').textContent = th === 'dark' ? t('themeLight') : t('themeDark');
   refreshColors();
   draw();
@@ -1777,6 +1829,31 @@ function updateHingeLabels() {
 $('doorWall').addEventListener('change', updateHingeLabels);
 
 /* =========================================================
+   VK: реакция на сворачивание приложения
+   ========================================================= */
+if(VK_AVAILABLE){
+  try{
+    vkBridge.subscribe((e)=>{
+      if(!e || !e.detail) return;
+      const type = e.detail.type;
+      if(type === 'VKWebAppViewHide'){
+        // Приложение свернули — закрываем мобильное меню.
+        // Никакие игровые процессы останавливать не нужно,
+        // планировщик работает по событиям пользователя.
+        closeMenu();
+      }
+    });
+  }catch(e){}
+}
+
+/* Резервный обработчик для обычного браузера / iframe / WebView */
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden){
+    closeMenu();
+  }
+});
+
+/* =========================================================
    Старт
    ========================================================= */
 document.documentElement.setAttribute('data-theme', THEME);
@@ -1805,6 +1882,19 @@ window.addEventListener('orientationchange', () => setTimeout(draw, 200));
 draw();
 renderDoorList();
 renderItemList();
+
+/* VK: асинхронно подтягиваем сохранённые настройки из VK Storage.
+   Если они отличаются от дефолта/localStorage — применяем. */
+(async ()=>{
+  try{
+    await storage.load(['rp_lang', 'rp_theme']);
+    const l = storage.get('rp_lang', LANG);
+    const th = storage.get('rp_theme', THEME);
+    if(l !== LANG) setLang(l);
+    if(th !== THEME) setTheme(th);
+  }catch(e){}
+})();
+
 </script>
 </body>
 </html>

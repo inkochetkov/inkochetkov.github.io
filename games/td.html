@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Tower Defense — Защита башнями</title>
+
+<!-- VK Bridge (обязательно для VK Mini Apps / VK Games) -->
+<script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
+
 <style>
   :root {
     --bg1:#1e3327; --bg2:#0a0f0c;
@@ -37,6 +41,8 @@
     font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
     color:var(--text);padding:14px;user-select:none;
     -webkit-tap-highlight-color:transparent;
+    touch-action: manipulation;
+    overscroll-behavior: none;
     transition:background .25s,color .25s;
   }
   .wrap{width:820px;max-width:100%;}
@@ -60,6 +66,8 @@
     font:inherit;font-weight:700;color:var(--text);cursor:pointer;
     background:var(--btn-bg);border:1px solid var(--border-light);border-radius:8px;
     padding:7px 12px;transition:.15s;white-space:nowrap;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
   .btn:hover:not(:disabled){background:var(--btn-hover);}
   .btn:active:not(:disabled){transform:translateY(1px);}
@@ -78,6 +86,7 @@
     display:block;width:820px;max-width:100%;height:auto;
     background:#16221a;cursor:crosshair;
     border-left:1px solid var(--border);border-right:1px solid var(--border);
+    touch-action: manipulation;
     transition:border-color .25s;
   }
 
@@ -122,6 +131,8 @@
     background:var(--tower-bg);border:1px solid var(--stat-border);border-left:4px solid var(--stat-border);
     border-radius:9px;padding:7px 9px;cursor:pointer;color:var(--text);
     font:inherit;text-align:left;transition:.15s;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
   .tower-btn:hover{background:var(--tower-bg-hover);}
   .tower-btn.selected{border-color:var(--accent);box-shadow:0 0 0 2px rgba(126,224,138,.22);}
@@ -229,18 +240,80 @@
 'use strict';
 
 /* =========================================================
+   VK BRIDGE — инициализация + хранилище + события
+   ========================================================= */
+const VK_AVAILABLE = (typeof vkBridge !== 'undefined');
+
+function initVK(){
+  if(!VK_AVAILABLE) return;
+  try{
+    vkBridge.send('VKWebAppInit').catch(()=>{ /* ignore */ });
+  }catch(e){ /* ignore */ }
+}
+initVK();
+
+/* Абстракция хранилища: VK Storage + localStorage fallback.
+   Значения строковые — важно для VKWebAppStorageGet/Set. */
+const storage = {
+  _cache: {},
+  async load(keys){
+    // 1. VK Storage
+    if(VK_AVAILABLE){
+      try{
+        const res = await vkBridge.send('VKWebAppStorageGet', { keys });
+        if(res && Array.isArray(res.keys)){
+          res.keys.forEach(item => {
+            if(item.value !== undefined && item.value !== ''){
+              this._cache[item.key] = item.value;
+            }
+          });
+        }
+      }catch(e){ /* не в VK, не авторизован, и т.п. */ }
+    }
+    // 2. Дополняем из localStorage (мгновенно, синхронно)
+    keys.forEach(k => {
+      if(this._cache[k] === undefined){
+        try{
+          const v = localStorage.getItem(k);
+          if(v !== null) this._cache[k] = v;
+        }catch(e){ /* sandbox */ }
+      }
+    });
+  },
+  get(key, fallback){
+    if(key in this._cache) return this._cache[key];
+    try{
+      const v = localStorage.getItem(key);
+      return v === null ? fallback : v;
+    }catch(e){ return fallback; }
+  },
+  set(key, value){
+    this._cache[key] = String(value);
+    try{ localStorage.setItem(key, String(value)); }catch(e){}
+    if(VK_AVAILABLE){
+      try{
+        vkBridge.send('VKWebAppStorageSet', { key, value: String(value) }).catch(()=>{});
+      }catch(e){}
+    }
+  }
+};
+
+/* =========================================================
    СОХРАНЕНИЕ НАСТРОЕК
    ========================================================= */
 const STORAGE_KEY = 'td_settings_v2';
 const settings = { theme: 'dark', lang: 'ru', difficulty: 'easy' };
+
+/* Мгновенная синхронизация из localStorage — чтобы дефолт был доступен сразу */
 try {
   const s = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
   if (s.theme) settings.theme = s.theme;
   if (s.lang) settings.lang = s.lang;
   if (s.difficulty) settings.difficulty = s.difficulty;
 } catch (e) {}
+
 function saveSettings() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(settings)); } catch (e) {}
+  storage.set(STORAGE_KEY, JSON.stringify(settings));
 }
 
 /* =========================================================
@@ -662,7 +735,6 @@ function update(dt) {
   if (state.gameOver) return;
   state.time += dt;
 
-  // спавн
   if (state.waveActive) {
     state.waveTimer += dt;
     while (state.spawnQueue.length && state.spawnQueue[0].t <= state.waveTimer) {
@@ -671,11 +743,9 @@ function update(dt) {
     }
   }
 
-  // движение врагов
   for (const e of state.enemies) {
     if (e.dead) continue;
 
-    // горение
     if (e.burnT > 0) {
       damageEnemy(e, e.burnDps * dt);
       e.burnT -= dt;
@@ -698,7 +768,6 @@ function update(dt) {
     if (e.seg >= path.length - 1) { e.dead = true; e.leaked = true; }
   }
 
-  // прорыв
   let lost = 0;
   for (const e of state.enemies) if (e.leaked) lost += e.leak;
   if (lost > 0) {
@@ -711,7 +780,6 @@ function update(dt) {
   }
   state.enemies = state.enemies.filter(e => !e.dead);
 
-  // башни
   for (const t of state.towers) {
     t.cd = Math.max(0, t.cd - dt);
     const st = towerStats(t);
@@ -727,7 +795,6 @@ function update(dt) {
     }
   }
 
-  // снаряды
   for (const p of state.projectiles) {
     if (p.target && p.target.dead) p.target = null;
     const tx = p.target ? p.target.x : p.tx;
@@ -741,17 +808,14 @@ function update(dt) {
   }
   state.projectiles = state.projectiles.filter(p => !p.dead);
 
-  // эффекты
   for (const fx of state.effects) fx.life -= dt;
   state.effects = state.effects.filter(fx => fx.life > 0);
 
-  // конец волны
   if (state.waveActive && state.spawnQueue.length === 0 && state.enemies.length === 0) {
     state.waveActive = false;
     const bonus = 20 + state.wave * 8;
     state.money += bonus;
     state.score += bonus;
-    // победа?
     if (isFinite(DIFF().maxWaves) && state.wave >= DIFF().maxWaves) {
       gameOver(true);
     }
@@ -882,7 +946,6 @@ function drawTower(t) {
   ctx.beginPath(); ctx.arc(t.x - 2.5, t.y - 2.5, 3.2, 0, Math.PI * 2);
   ctx.fillStyle = CT.core; ctx.fill();
 
-  // уровень
   ctx.font = 'bold 10px sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillStyle = CT.lvlText;
@@ -904,14 +967,12 @@ function drawEnemy(e) {
   ctx.arc(e.x - e.radius * 0.3, e.y - e.radius * 0.35, e.radius * 0.3, 0, Math.PI * 2);
   ctx.fillStyle = CT.eHi; ctx.fill();
 
-  // заморозка
   if (e.slowT > 0) {
     ctx.beginPath(); ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
     ctx.fillStyle = CT.freezeFill; ctx.fill();
     ctx.strokeStyle = CT.freezeStroke; ctx.lineWidth = 2; ctx.stroke();
   }
 
-  // огонь
   if (e.burnT > 0) {
     const tt = state.time * 12;
     for (let i = 0; i < 3; i++) {
@@ -927,7 +988,6 @@ function drawEnemy(e) {
     ctx.fillStyle = CT.fire2; ctx.fill();
   }
 
-  // hp
   const bw = e.radius * 2.3, bh = 4;
   const bx = e.x - bw / 2, by = e.y - e.radius - 11;
   const hp = Math.max(0, e.hp / e.maxHp);
@@ -1183,7 +1243,6 @@ panel.addEventListener('click', e => {
    INFO MODAL
    ========================================================= */
 function renderInfo() {
-  const ru = settings.lang === 'ru';
   document.getElementById('infoTitle').textContent = t('infoTitle');
 
   let towerHtml = '';
@@ -1392,6 +1451,33 @@ function loop(ts) {
 }
 
 /* =========================================================
+   VK: реакции на события платформы
+   ========================================================= */
+if(VK_AVAILABLE){
+  try{
+    vkBridge.subscribe((e)=>{
+      if(!e || !e.detail) return;
+      const type = e.detail.type;
+      /* Пользователь свернул приложение VK — ставим игру на паузу */
+      if(type === 'VKWebAppViewHide'){
+        if(state && !state.paused && !state.gameOver && !state.infoOpen){
+          state.paused = true;
+          updatePauseBtn();
+        }
+      }
+    });
+  }catch(e){}
+}
+
+/* Резервный обработчик для обычного браузера / iframe / WebView */
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden && state && !state.paused && !state.gameOver && !state.infoOpen){
+    state.paused = true;
+    updatePauseBtn();
+  }
+});
+
+/* =========================================================
    ИНИЦИАЛИЗАЦИЯ
    ========================================================= */
 loadMap(DIFF().mapKey);
@@ -1401,6 +1487,31 @@ applyLang();
 buildShop();
 updateUI(true);
 requestAnimationFrame(loop);
+
+/* VK: асинхронно подтягиваем сохранённые настройки из VK Storage.
+   Если они отличаются от текущих — применяем и, при необходимости, перезапускаем. */
+(async ()=>{
+  try{
+    await storage.load([STORAGE_KEY]);
+    const raw = storage.get(STORAGE_KEY, null);
+    if(!raw) return;
+    let s;
+    try{ s = JSON.parse(raw); }catch(e){ return; }
+
+    let needRestart = false;
+    if(s.theme && s.theme !== settings.theme){ settings.theme = s.theme; applyTheme(); }
+    if(s.lang && s.lang !== settings.lang){ settings.lang = s.lang; applyLang(); }
+    if(s.difficulty && s.difficulty !== settings.difficulty){
+      settings.difficulty = s.difficulty;
+      loadMap(DIFF().mapKey);
+      needRestart = true;
+    }
+    if(needRestart){
+      restart();
+      applyLang();
+    }
+  }catch(e){ /* ignore */ }
+})();
 
 })();
 </script>
