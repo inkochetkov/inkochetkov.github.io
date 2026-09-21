@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Арена Ярости</title>
+
+<script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
+
 <style>
   :root{
     --bg:#0d0f13; --ink:#e8eef7; --muted:#93a2b8; --muted2:#6d7c92;
@@ -45,7 +48,6 @@
 
   *{margin:0;padding:0;box-sizing:border-box}
 
-  /* FIX: --vh для iOS (URL-бар), убран touch-action:none с body */
   html{
     width:100%;
     height:100vh;
@@ -68,10 +70,9 @@
 
   canvas{
     display:block;position:absolute;inset:0;cursor:crosshair;
-    touch-action:none; /* FIX: только на канвасе */
+    touch-action:none;
   }
 
-  /* FIX: все интерактивные элементы получают manipulation + pointer */
   button, .perk{
     touch-action: manipulation;
     cursor: pointer;
@@ -170,7 +171,7 @@
     .sub{font-size:13px}
     .sub.dim{font-size:11px}
     .overlay{gap:14px;padding:14px}
-    .overlay > button{padding:14px 28px;font-size:16px} /* FIX: удобнее для тапа */
+    .overlay > button{padding:14px 28px;font-size:16px}
     .pauseBtns button{padding:14px 22px;font-size:16px}
     .perk{width:min(280px,86vw);padding:16px 12px}
     #perkList{gap:10px}
@@ -239,8 +240,76 @@
 <script>
 /* =========================================================================
    ARENA OF FURY — top-down arena shooter
-   Совместимость: iframe / Android WebView / iOS WKWebView / мобильный Safari
+   Совместимость: iframe / Android WebView / iOS WKWebView / VK Mini Apps
    ========================================================================= */
+
+/* ----------------------------- VK BRIDGE ------------------------------- */
+const VK_AVAILABLE = (typeof vkBridge !== 'undefined');
+
+/* Отправляем VKWebAppInit сразу — без этого VK не запускает приложение */
+function initVK(){
+  if(!VK_AVAILABLE) return;
+  try{
+    vkBridge.send('VKWebAppInit')
+      .then(()=>{ /* успех — можно логировать при отладке */ })
+      .catch(err=>{ console.warn('VKWebAppInit error:', err); });
+  }catch(e){
+    console.warn('VKWebAppInit threw:', e);
+  }
+}
+initVK();
+
+/* --------------------- АБСТРАКЦИЯ ХРАНИЛИЩА ---------------------------- */
+/* VK Storage (кросс-девайс) + fallback на localStorage.
+   Загрузка асинхронная, сохранение — fire & forget. */
+const storage = {
+  _cache: {},
+  _loaded: false,
+
+  async load(keys){
+    // 1. Пробуем VK Storage
+    if(VK_AVAILABLE){
+      try{
+        const res = await vkBridge.send('VKWebAppStorageGet', { keys });
+        if(res && Array.isArray(res.keys)){
+          res.keys.forEach(item=>{
+            if(item.value !== undefined && item.value !== ''){
+              this._cache[item.key] = item.value;
+            }
+          });
+        }
+      }catch(e){ /* ignore — может быть не авторизован */ }
+    }
+    // 2. Дополняем из localStorage (мгновенно, синхронно)
+    keys.forEach(k=>{
+      if(this._cache[k] === undefined){
+        try{
+          const v = localStorage.getItem(k);
+          if(v !== null) this._cache[k] = v;
+        }catch(e){ /* sandbox */ }
+      }
+    });
+    this._loaded = true;
+  },
+
+  get(key, fallback){
+    if(key in this._cache) return this._cache[key];
+    try{
+      const v = localStorage.getItem(key);
+      return v === null ? fallback : v;
+    }catch(e){ return fallback; }
+  },
+
+  set(key, value){
+    this._cache[key] = String(value);
+    try{ localStorage.setItem(key, String(value)); }catch(e){}
+    if(VK_AVAILABLE){
+      try{
+        vkBridge.send('VKWebAppStorageSet', { key, value: String(value) }).catch(()=>{});
+      }catch(e){}
+    }
+  }
+};
 
 /* ------------------------------ Утилиты -------------------------------- */
 const rand    = (a,b)=> a + Math.random()*(b-a);
@@ -249,7 +318,6 @@ const clamp   = (v,a,b)=> v<a?a:(v>b?b:v);
 const TAU     = Math.PI*2;
 const d2      = (a,b)=>{ const dx=a.x-b.x, dy=a.y-b.y; return dx*dx+dy*dy; };
 
-/* FIX: --vh для iOS Safari (URL-бар). Обновляем на resize/orientation */
 function setViewportHeight(){
   document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px');
 }
@@ -257,8 +325,7 @@ setViewportHeight();
 window.addEventListener('resize', setViewportHeight);
 window.addEventListener('orientationchange', ()=> setTimeout(setViewportHeight, 200));
 
-/* FIX: надёжный обработчик тапа для iOS/Android.
-   touchend + preventDefault() + дедупликация click (для мыши). */
+/* Надёжный обработчик тапа (iOS/Android) */
 function bindTap(el, handler){
   if(!el) return;
   let lastTouch = 0;
@@ -349,7 +416,8 @@ function setTheme(name){
     btn.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
     btn.title = currentTheme === 'dark' ? 'Светлая тема' : 'Тёмная тема';
   }
-  try{ localStorage.setItem('aof-theme', currentTheme); }catch(e){}
+  /* VK: сохранение через абстракцию storage */
+  storage.set('aof-theme', currentTheme);
 }
 
 /* -------------------------------- Звук --------------------------------- */
@@ -380,12 +448,12 @@ function setSound(on){
     btn.textContent = soundOn ? '🔊' : '🔇';
     btn.title = soundOn ? t('soundOn') : t('soundOff');
   }
-  try{ localStorage.setItem('aof-sound', soundOn ? '1' : '0'); }catch(e){}
+  storage.set('aof-sound', soundOn ? '1' : '0');
 }
 
 /* ------------------------------ Константы ------------------------------ */
 const WEAPONS = {
-  pistol:  {name:'Пистолет', dmg:14, rof:0.17, spread:0.030, speed:1000, count:1, ammo:Infinity,
+  pistol:  {name:'Пистолет', dmg:14, rof:0.17,  spread:0.030, speed:1000, count:1, ammo:Infinity,
             color:'#ffe066', size:3.5, pierce:0, kb:70,  life:1.1, shake:1.5, snd:[720,0.05,0.030]},
   smg:     {name:'ПП «Оса»', dmg:8,  rof:0.060, spread:0.110, speed:1150, count:1, ammo:320,
             color:'#7fdcff', size:3.0, pierce:0, kb:45,  life:1.0, shake:1.0, snd:[900,0.035,0.022]},
@@ -482,7 +550,6 @@ canvas.addEventListener('mousedown', e=>{ if(e.button===0){ mouse.down = true; i
 window.addEventListener('mouseup',   e=>{ if(e.button===0) mouse.down = false; });
 canvas.addEventListener('contextmenu', e=> e.preventDefault());
 
-/* --- Мобильный виртуальный стик --- */
 const stick = {active:false, id:null, ox:0, oy:0, dx:0, dy:0};
 canvas.addEventListener('touchstart', e=>{
   initAudio();
@@ -606,7 +673,6 @@ function openPerkMenu(){
     const nm = i18n[currentLang].perkNames[p.id];
     const ds = i18n[currentLang].perkDescs[p.id];
     el.innerHTML = `<div class="ic">${p.ic}</div><div class="nm">${nm}</div><div class="ds">${ds}</div>`;
-    /* FIX: используем bindTap для мобильной надёжности */
     bindTap(el, ()=>{
       p.f();
       pendingLevelUps--;
@@ -1175,7 +1241,6 @@ function goToMenu(){
   updateHUD();
 }
 
-/* === FIX: все обработчики кнопок через bindTap (iOS-friendly) === */
 bindTap(document.getElementById('startBtn'), ()=>{
   initAudio();
   document.getElementById('menu').classList.add('hidden');
@@ -1214,7 +1279,19 @@ document.querySelectorAll('.langBtn').forEach(btn => {
   });
 });
 
-/* Только visibilitychange — безопасно для iframe/WebView */
+/* VK: VK Bridge сообщает о сворачивании приложения — ставим на паузу */
+if(VK_AVAILABLE){
+  try{
+    vkBridge.subscribe((e)=>{
+      if(!e || !e.detail) return;
+      const type = e.detail.type;
+      if(type === 'VKWebAppViewHide' && game.state === 'playing') pauseGame();
+      // VKWebAppViewRestore — оставляем на паузе, игрок сам нажмёт "Продолжить"
+    });
+  }catch(e){}
+}
+
+/* Резервный вариант: DOM visibilitychange (для iframe/WebView вне VK) */
 document.addEventListener('visibilitychange', ()=>{
   if(document.hidden && game.state === 'playing') pauseGame();
 });
@@ -1242,13 +1319,20 @@ if(!CanvasRenderingContext2D.prototype.roundRect){
   };
 }
 
-let savedTheme = 'dark';
-try{ savedTheme = localStorage.getItem('aof-theme') || 'dark'; }catch(e){}
-setTheme(savedTheme);
+/* VK: применяем дефолты мгновенно, потом подгружаем сохранёнки асинхронно */
+setTheme('dark');
+setSound(true);
 
-let savedSound = true;
-try{ savedSound = localStorage.getItem('aof-sound') !== '0'; }catch(e){}
-setSound(savedSound);
+(async ()=>{
+  try{
+    await storage.load(['aof-theme', 'aof-sound']);
+    const th = storage.get('aof-theme', 'dark');
+    if(th !== currentTheme) setTheme(th);
+    const snd = storage.get('aof-sound', '1');
+    const sndBool = (snd === '1' || snd === 'true');
+    if(sndBool !== soundOn) setSound(sndBool);
+  }catch(e){ /* ignore */ }
+})();
 
 applyLanguage();
 requestAnimationFrame(loop);
