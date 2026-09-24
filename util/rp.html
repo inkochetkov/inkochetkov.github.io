@@ -255,6 +255,49 @@
   }
   .menu-btn:active { transform: scale(.96); }
 
+  /* Модальное окно */
+  .modal-backdrop {
+    position: fixed; inset: 0; z-index: 200;
+    background: var(--overlay);
+    display: none; align-items: center; justify-content: center;
+    padding: 20px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .modal-backdrop.show { display: flex; }
+  .modal {
+    background: var(--panel-bg); color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px 16px;
+    max-width: 440px; width: 100%;
+    box-shadow: 0 20px 60px var(--shadow);
+    animation: modalIn .16s ease-out;
+    max-height: 88vh; overflow-y: auto;
+  }
+  @keyframes modalIn {
+    from { transform: translateY(8px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .modal-title {
+    font-size: 15px; font-weight: 700; margin: 0 0 8px;
+    color: var(--text);
+  }
+  .modal-text {
+    font-size: 13.5px; line-height: 1.45; color: var(--text-muted); margin: 0 0 16px;
+    white-space: pre-wrap;
+  }
+  .modal-image {
+    display: block; width: 100%; height: auto;
+    margin: 4px 0 14px; border-radius: 8px;
+    border: 1px solid var(--border-soft); background: #fff;
+  }
+  .modal-actions {
+    display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap;
+  }
+  .modal-actions .btn {
+    width: auto; min-width: 92px; margin-bottom: 0; padding: 9px 16px;
+  }
+
   @media (max-width: 820px) {
     body { display: block; }
     .stage { position: fixed; inset: 0; height: 100vh; }
@@ -397,6 +440,16 @@
   </div>
 </main>
 
+<!-- Модальное окно (замена alert / confirm) -->
+<div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true">
+  <div class="modal" id="modal">
+    <h3 class="modal-title" id="modalTitle"></h3>
+    <p class="modal-text" id="modalText"></p>
+    <img class="modal-image" id="modalImage" alt="" style="display:none">
+    <div class="modal-actions" id="modalActions"></div>
+  </div>
+</div>
+
 <script>
 /* =========================================================
    VK BRIDGE — init + storage + events
@@ -508,6 +561,11 @@ const i18n = {
     printPdf: '🖨 Печать / PDF',
     toolsHint: 'Перетаскивайте объекты мышью. Красная зона — место, куда нельзя ничего ставить (открывание двери). Колесо мыши / щипок — масштаб, перетаскивание пустого места — сдвиг плана.',
     confirmClear: 'Очистить поле полностью: мебель и дверные проёмы?',
+    confirmClearTitle: 'Очистить поле?',
+    ok: 'OK',
+    cancel: 'Отмена',
+    printErrorTitle: 'Не удалось открыть печать',
+    printErrorText: 'Браузер заблокировал окно печати. Разрешите всплывающие окна или откройте приложение в обычном браузере. Ниже — изображение плана: его можно сохранить долгим нажатием и распечатать вручную.',
     wallLabel: 'Стена',
     doorWord: 'Дверь',
     doorSwingInShort: 'внутрь',
@@ -580,6 +638,11 @@ const i18n = {
     printPdf: '🖨 Print / PDF',
     toolsHint: 'Drag items with mouse. Red zone — no-place area (door swing). Wheel / pinch — zoom, drag empty area — pan.',
     confirmClear: 'Clear everything: furniture and doorways?',
+    confirmClearTitle: 'Clear everything?',
+    ok: 'OK',
+    cancel: 'Cancel',
+    printErrorTitle: 'Could not open print dialog',
+    printErrorText: 'The browser blocked the print window. Allow pop-ups or open the app in a regular browser. Below is the plan image — long-press it to save and print manually.',
     wallLabel: 'Wall',
     doorWord: 'Door',
     doorSwingInShort: 'inward',
@@ -642,6 +705,61 @@ let drag = null;
 const pointers = new Map();
 let pinchState = null;
 let panState = null;
+
+/* =========================================================
+   Модальное окно (замена alert / confirm)
+   ========================================================= */
+function showModal({ title, message, buttons, imageUrl } = {}){
+  return new Promise(resolve => {
+    const backdrop = $('modalBackdrop');
+    const titleEl  = $('modalTitle');
+    const textEl   = $('modalText');
+    const imgEl    = $('modalImage');
+    const actions  = $('modalActions');
+
+    titleEl.textContent = title || '';
+    titleEl.style.display = title ? '' : 'none';
+    textEl.textContent = message || '';
+    textEl.style.display = message ? '' : 'none';
+
+    if (imageUrl){
+      imgEl.src = imageUrl;
+      imgEl.style.display = '';
+    } else {
+      imgEl.removeAttribute('src');
+      imgEl.style.display = 'none';
+    }
+
+    actions.innerHTML = '';
+    const btns = (buttons && buttons.length)
+      ? buttons
+      : [{ label: t('ok'), value: true, primary: true }];
+
+    btns.forEach(b => {
+      const btn = document.createElement('button');
+      btn.className = 'btn'
+        + (b.primary ? ' primary' : '')
+        + (b.danger  ? ' danger'  : '');
+      btn.textContent = b.label;
+      btn.onclick = () => { closeModal(); resolve(b.value); };
+      actions.appendChild(btn);
+    });
+
+    backdrop.classList.add('show');
+
+    function onBackdrop(e){
+      if (e.target === backdrop){
+        backdrop.removeEventListener('click', onBackdrop);
+        closeModal();
+        resolve(false);
+      }
+    }
+    backdrop.addEventListener('click', onBackdrop);
+  });
+}
+function closeModal(){
+  $('modalBackdrop').classList.remove('show');
+}
 
 /* =========================================================
    Цвета
@@ -1630,8 +1748,28 @@ function findPlacement(w, h) {
   return candidates[0];
 }
 
+/* ---- Автонумерация мебели: "Шкаф" → "Шкаф 1", "Шкаф 2", ... ---- */
+function nextItemName(rawName) {
+  const raw = (rawName || '').trim() || 'Item';
+  // Отсекаем хвостовой номер у базового имени: "Шкаф 5" → "Шкаф"
+  const m = raw.match(/^(.*?)\s*\d+$/);
+  const base = (m && m[1].trim()) ? m[1].trim() : raw;
+  const baseLower = base.toLowerCase();
+
+  // Ищем максимальный номер среди уже добавленных с таким же базовым именем
+  let maxN = 0;
+  for (const it of state.items) {
+    const im = it.name.match(/^(.*?)\s*(\d+)$/);
+    if (im && im[1].trim().toLowerCase() === baseLower) {
+      const n = parseInt(im[2], 10);
+      if (n > maxN) maxN = n;
+    }
+  }
+  return `${base} ${maxN + 1}`;
+}
+
 $('addItem').onclick = () => {
-  const name = ($('itemName').value || '').trim() || 'Item';
+  const name = nextItemName($('itemName').value);
   const w = clamp(Math.round(+$('itemW').value || 50), 10, 3000);
   const h = clamp(Math.round(+$('itemH').value || 50), 10, 3000);
   const pos = findPlacement(w, h);
@@ -1691,8 +1829,17 @@ $('rotateSel').onclick = () => {
   draw(); renderItemList();
 };
 
-$('clearAll').onclick = () => {
-  if (!confirm(t('confirmClear'))) return;
+$('clearAll').onclick = async () => {
+  const ok = await showModal({
+    title: t('confirmClearTitle'),
+    message: t('confirmClear'),
+    buttons: [
+      { label: t('cancel'), value: false },
+      { label: t('ok'),     value: true, danger: true, primary: true }
+    ]
+  });
+  if (!ok) return;
+
   state.items = [];
   state.doors = [];
   state.selected = null;
@@ -1713,7 +1860,70 @@ $('zoomResetF').onclick = () => resetView();
 /* =========================================================
    Печать / PDF
    ========================================================= */
-$('printPdf').onclick = () => {
+
+/* Универсальный способ отображения печати:
+   1) пробуем новое окно (desktop-friendly);
+   2) если окно заблокировано — используем скрытый iframe (мобильные WebView).
+   Возвращает true, если удалось запустить печать хоть каким-то способом. */
+function openPrintHtml(html) {
+  // --- Вариант 1: новое окно ---
+  let win = null;
+  try { win = window.open('', '_blank'); } catch (e) { win = null; }
+  if (win && win.document) {
+    try {
+      win.document.open();
+      win.document.write(html);
+      win.document.close();
+      const go = () => {
+        try { win.focus(); win.print(); } catch (e) {}
+      };
+      if (win.document.readyState === 'complete') setTimeout(go, 400);
+      else win.onload = () => setTimeout(go, 400);
+      // если через 5 сек окно так и не открылось — считаем, что не удалось
+      return true;
+    } catch (e) {
+      try { win.close(); } catch (_) {}
+    }
+  }
+
+  // --- Вариант 2: скрытый iframe (универсальный, работает и на мобильных) ---
+  try {
+    const iframe = document.createElement('iframe');
+    iframe.setAttribute('aria-hidden', 'true');
+    iframe.style.cssText =
+      'position:fixed;right:0;bottom:0;width:1px;height:1px;' +
+      'border:0;opacity:0;pointer-events:none;';
+
+    let printed = false;
+    const doPrint = () => {
+      if (printed) return;
+      printed = true;
+      try {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+      } catch (e) {}
+      setTimeout(() => { try { iframe.remove(); } catch (_) {} }, 3000);
+    };
+
+    iframe.onload = () => setTimeout(doPrint, 350);
+
+    document.body.appendChild(iframe);
+    const doc = iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document);
+    if (!doc) { iframe.remove(); return false; }
+
+    doc.open();
+    doc.write(html);
+    doc.close();
+
+    // страховка, если onload не сработает
+    setTimeout(doPrint, 1500);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+$('printPdf').onclick = async () => {
   const OW = 2000, OH = 1400;
   const oc = document.createElement('canvas');
   oc.width = OW; oc.height = OH;
@@ -1731,10 +1941,7 @@ $('printPdf').onclick = () => {
              + `${t('itemsWord')}: ${state.items.length} · `
              + `${t('doorsWord')}: ${state.doors.length}`;
 
-  const win = window.open('', '_blank');
-  if (!win) { alert(t('popupBlocked')); return; }
-
-  win.document.write(`<!DOCTYPE html><html lang="${LANG}"><head><meta charset="utf-8">
+  const html = `<!DOCTYPE html><html lang="${LANG}"><head><meta charset="utf-8">
   <title>${t('printTitle')}</title>
   <style>
     @page { size: A4 landscape; margin: 12mm; }
@@ -1749,12 +1956,17 @@ $('printPdf').onclick = () => {
     <div class="meta">${meta}</div>
     <img src="${url}" alt="plan">
     <div class="legend">${t('printLegend')}</div>
-  </body></html>`);
-  win.document.close();
+  </body></html>`;
 
-  const go = () => { win.focus(); win.print(); };
-  if (win.document.readyState === 'complete') setTimeout(go, 300);
-  else win.onload = () => setTimeout(go, 300);
+  const ok = openPrintHtml(html);
+  if (!ok) {
+    await showModal({
+      title: t('printErrorTitle'),
+      message: t('printErrorText'),
+      imageUrl: url,
+      buttons: [{ label: t('ok'), value: true, primary: true }]
+    });
+  }
 };
 
 /* =========================================================
@@ -1837,9 +2049,6 @@ if(VK_AVAILABLE){
       if(!e || !e.detail) return;
       const type = e.detail.type;
       if(type === 'VKWebAppViewHide'){
-        // Приложение свернули — закрываем мобильное меню.
-        // Никакие игровые процессы останавливать не нужно,
-        // планировщик работает по событиям пользователя.
         closeMenu();
       }
     });
@@ -1871,9 +2080,16 @@ state.doors.push({
   id: state.nextId++, wallIndex: 2, offset: 40, width: 90,
   hinge: 'start', swing: 'in'
 });
-state.items.push({ id: state.nextId++, name: LANG === 'ru' ? 'Шкаф'  : 'Wardrobe', w: 120, h: 60, x: 20,  y: 20 });
-state.items.push({ id: state.nextId++, name: LANG === 'ru' ? 'Диван' : 'Sofa',     w: 180, h: 80, x: 190, y: 190 });
-state.items.push({ id: state.nextId++, name: LANG === 'ru' ? 'Стол'  : 'Table',    w: 100, h: 70, x: 140, y: 100 });
+
+// Демонстрационные объекты — прогоняем через автонумерацию,
+// чтобы не было двух «Шкаф» без номеров.
+function seedItem(nameRu, nameEn, w, h, x, y) {
+  const name = nextItemName(LANG === 'ru' ? nameRu : nameEn);
+  state.items.push({ id: state.nextId++, name, w, h, x, y });
+}
+seedItem('Шкаф', 'Wardrobe', 120, 60,  20,  20);
+seedItem('Диван','Sofa',     180, 80, 190, 190);
+seedItem('Стол', 'Table',    100, 70, 140, 100);
 
 new ResizeObserver(() => draw()).observe(canvas);
 window.addEventListener('resize', draw);
